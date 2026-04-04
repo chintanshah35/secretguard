@@ -1,0 +1,24 @@
+export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+
+export type PatternMatch = {
+  name: string
+  severity: Severity
+  pattern: RegExp
+  mask: (match: string) => string
+}
+
+export type Finding = {
+  file: string
+  line: number
+  column: number
+  pattern: string
+  severity: Severity
+  masked: string
+  raw: string
+}
+
+export type ScanResult = {
+  scanned: number
+  findings: Finding[]
+  duration: number
+}
