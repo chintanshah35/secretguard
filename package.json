@@ -1,0 +1,31 @@
+{
+  "name": "secretscan",
+  "version": "0.0.1",
+  "description": "Scan source code for secrets, credentials, and PII",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "secretscan": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest"
+  },
+  "keywords": [
+    "security",
+    "secret-scanning",
+    "pii",
+    "credentials",
+    "devsecops",
+    "cli"
+  ],
+  "author": "Chintan Shah",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}
