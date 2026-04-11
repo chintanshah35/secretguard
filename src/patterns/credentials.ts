@@ -25,4 +25,22 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /(?:aws[_\-]?secret[_\-]?(?:access[_\-]?)?key|AWS_SECRET)["\s=:]+([A-Za-z0-9\/+=]{40})/gi,
     mask: (match) => maskSecret(match),
   },
+  {
+    name: 'GitHub Personal Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bghp_[a-zA-Z0-9]{36}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'GitHub App Token',
+    severity: 'CRITICAL',
+    pattern: /\bghs_[a-zA-Z0-9]{36}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'GitHub OAuth Token',
+    severity: 'CRITICAL',
+    pattern: /\bgho_[a-zA-Z0-9]{36}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
 ]
