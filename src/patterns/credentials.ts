@@ -43,4 +43,23 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /\bgho_[a-zA-Z0-9]{36}\b/g,
     mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
   },
+  {
+    name: 'Stripe Live Secret Key',
+    severity: 'CRITICAL',
+    pattern: /\bsk_live_[a-zA-Z0-9]{24,}\b/g,
+    mask: (match) => match.slice(0, 12) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Stripe Live Publishable Key',
+    severity: 'HIGH',
+    pattern: /\bpk_live_[a-zA-Z0-9]{24,}\b/g,
+    mask: (match) => match.slice(0, 12) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Generic API Key',
+    severity: 'HIGH',
+    // High-entropy 32+ char alphanumeric strings assigned to api_key/apiKey/API_KEY
+    pattern: /(?:api[_\-]?key|apikey|API_KEY)["\s=:]+["']?([a-zA-Z0-9_\-]{32,})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
 ]
