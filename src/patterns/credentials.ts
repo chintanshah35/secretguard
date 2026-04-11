@@ -62,4 +62,22 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /(?:api[_\-]?key|apikey|API_KEY)["\s=:]+["']?([a-zA-Z0-9_\-]{32,})["']?/gi,
     mask: (match) => maskSecret(match),
   },
+  {
+    name: 'RSA Private Key',
+    severity: 'CRITICAL',
+    pattern: /-----BEGIN RSA PRIVATE KEY-----[\s\S]+?-----END RSA PRIVATE KEY-----/g,
+    mask: () => '-----BEGIN RSA PRIVATE KEY----- [redacted] -----END RSA PRIVATE KEY-----',
+  },
+  {
+    name: 'EC Private Key',
+    severity: 'CRITICAL',
+    pattern: /-----BEGIN EC PRIVATE KEY-----[\s\S]+?-----END EC PRIVATE KEY-----/g,
+    mask: () => '-----BEGIN EC PRIVATE KEY----- [redacted] -----END EC PRIVATE KEY-----',
+  },
+  {
+    name: 'OpenSSH Private Key',
+    severity: 'CRITICAL',
+    pattern: /-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]+?-----END OPENSSH PRIVATE KEY-----/g,
+    mask: () => '-----BEGIN OPENSSH PRIVATE KEY----- [redacted] -----END OPENSSH PRIVATE KEY-----',
+  },
 ]
