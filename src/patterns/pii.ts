@@ -18,7 +18,6 @@ export const piiPatterns: PatternMatch[] = [
   {
     name: 'Phone Number (US)',
     severity: 'MEDIUM',
-    // Covers +1 (555) 123-4567, 555.123.4567, 5551234567, etc.
     pattern: /(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
     mask: (match) => {
       const digits = match.replace(/\D/g, '')
@@ -30,5 +29,22 @@ export const piiPatterns: PatternMatch[] = [
     severity: 'MEDIUM',
     pattern: /\+(?:[1-9]\d{0,2})[-.\s]?\(?\d{1,4}\)?(?:[-.\s]\d{1,4}){2,4}\b/g,
     mask: (match) => match.slice(0, 4) + '****' + match.slice(-2),
+  },
+  {
+    name: 'SSN',
+    severity: 'CRITICAL',
+    // Matches 123-45-6789 and 123456789 but avoids phone number collisions
+    pattern: /\b(?!000|666|9\d{2})\d{3}[-\s]?(?!00)\d{2}[-\s]?(?!0000)\d{4}\b/g,
+    mask: (match) => '***-**-' + match.replace(/\D/g, '').slice(-4),
+  },
+  {
+    name: 'Credit Card',
+    severity: 'CRITICAL',
+    // Visa, Mastercard, Amex, Discover
+    pattern: /\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6011)[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g,
+    mask: (match) => {
+      const digits = match.replace(/\D/g, '')
+      return '**** **** **** ' + digits.slice(-4)
+    },
   },
 ]
