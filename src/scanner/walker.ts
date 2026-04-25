@@ -1,12 +1,11 @@
-import { readdir, stat } from 'fs/promises'
+import { readdir } from 'fs/promises'
 import { join, relative } from 'path'
+import { DEFAULT_IGNORE } from './ignore.js'
 
 export type WalkerOptions = {
   ignore?: string[]
   root: string
 }
-
-const DEFAULT_IGNORE = ['node_modules', '.git', 'dist', 'build', 'coverage', '.next', '.nuxt']
 
 export async function* walkFiles(directory: string, options: WalkerOptions): AsyncGenerator<string> {
   const ignore = [...DEFAULT_IGNORE, ...(options.ignore ?? [])]
