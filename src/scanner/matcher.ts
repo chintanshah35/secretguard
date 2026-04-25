@@ -10,7 +10,15 @@ export async function matchFile(
   const extension = extname(filePath).toLowerCase()
   if (BINARY_EXTENSIONS.has(extension)) return []
 
-  const content = await readFile(filePath, 'utf-8')
+  let content: string
+  try {
+    content = await readFile(filePath, 'utf-8')
+  } catch {
+    return []
+  }
+
+  // Skip files that appear binary by checking for null bytes in first 512 chars
+  if (content.slice(0, 512).includes('\0')) return []
   const lines = content.split('\n')
   const findings: Finding[] = []
 
