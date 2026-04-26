@@ -27,6 +27,15 @@ function formatFinding(finding: Finding): string {
   return `  ${label} ${name}\n  ${location}\n  ${value}\n`
 }
 
+const SEVERITY_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+
+function groupBySeverity(findings: Finding[]): Map<Severity, Finding[]> {
+  const groups = new Map<Severity, Finding[]>()
+  for (const severity of SEVERITY_ORDER) groups.set(severity, [])
+  for (const finding of findings) groups.get(finding.severity)!.push(finding)
+  return groups
+}
+
 export function printReport(result: ScanResult): void {
   if (result.findings.length === 0) {
     console.log(`${colors.green}No findings. Scanned ${result.scanned} files in ${result.duration}ms.${colors.reset}`)
@@ -35,8 +44,18 @@ export function printReport(result: ScanResult): void {
 
   console.log(`\n${colors.bold}secretscan found ${result.findings.length} issue(s) in ${result.scanned} files${colors.reset}\n`)
 
-  for (const finding of result.findings) {
-    console.log(formatFinding(finding))
+  const groups = groupBySeverity(result.findings)
+
+  for (const severity of SEVERITY_ORDER) {
+    const group = groups.get(severity)!
+    if (group.length === 0) continue
+
+    const color = severityColor[severity]
+    console.log(`${color}${colors.bold}── ${severity} (${group.length}) ──${colors.reset}\n`)
+
+    for (const finding of group) {
+      console.log(formatFinding(finding))
+    }
   }
 
   console.log(`${colors.gray}Completed in ${result.duration}ms${colors.reset}`)
