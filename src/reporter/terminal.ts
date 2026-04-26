@@ -22,9 +22,10 @@ function formatFinding(finding: Finding): string {
   const location = `${colors.gray}${finding.file}:${finding.line}:${finding.column}${colors.reset}`
   const label = `${color}${colors.bold}[${finding.severity}]${colors.reset}`
   const name = `${colors.bold}${finding.pattern}${colors.reset}`
+  // Always show masked value — never expose raw secrets in terminal output
   const value = `${colors.gray}${finding.masked}${colors.reset}`
 
-  return `  ${label} ${name}\n  ${location}\n  ${value}\n`
+  return `  ${label} ${name}\n  ${location}\n  Found: ${value}\n`
 }
 
 const SEVERITY_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
