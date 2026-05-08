@@ -1,8 +1,10 @@
 import type { PatternMatch } from './types.js'
 
 const maskSecret = (match: string): string => {
-  if (match.length <= 8) return match.slice(0, 4) + '****'
-  return match.slice(0, 6) + '*'.repeat(match.length - 10) + match.slice(-4)
+  if (match.length === 0) return '****'
+  if (match.length <= 4) return '*'.repeat(match.length)
+  if (match.length <= 8) return match.slice(0, 2) + '*'.repeat(match.length - 2)
+  return match.slice(0, 6) + '*'.repeat(Math.max(match.length - 10, 4)) + match.slice(-4)
 }
 
 export const credentialPatterns: PatternMatch[] = [
