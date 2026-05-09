@@ -36,3 +36,6 @@ if (args.json) {
 } else {
   printReport(result)
 }
+
+const hasCritical = result.findings.some((f) => f.severity === 'CRITICAL')
+process.exit(hasCritical ? 1 : 0)
