@@ -3,6 +3,7 @@
 import { parseArgs } from './args.js'
 import { scan } from '../scanner/index.js'
 import { printReport } from '../reporter/terminal.js'
+import { printJson } from '../reporter/json.js'
 
 const args = parseArgs(process.argv)
 
@@ -29,4 +30,9 @@ Examples:
 }
 
 const result = await scan(args.target, { ignore: args.ignore })
-printReport(result)
+
+if (args.json) {
+  printJson(result)
+} else {
+  printReport(result)
+}
