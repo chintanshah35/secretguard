@@ -25,7 +25,12 @@ function formatFinding(finding: Finding): string {
   // Always show masked value — never expose raw secrets in terminal output
   const value = `${colors.gray}${finding.masked}${colors.reset}`
 
-  return `  ${label} ${name}\n  ${location}\n  Found: ${value}\n`
+  return [
+    `  ${label} ${name}`,
+    `  at ${location}`,
+    `  value ${value}`,
+    '',
+  ].join('\n')
 }
 
 const SEVERITY_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
