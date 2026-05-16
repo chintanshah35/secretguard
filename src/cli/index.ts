@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { writeFile } from 'fs/promises'
 import { parseArgs } from './args.js'
 import { scan } from '../scanner/index.js'
 import { printReport } from '../reporter/terminal.js'
 import { printJson } from '../reporter/json.js'
+import { generateHtml } from '../reporter/html.js'
 
 const args = parseArgs(process.argv)
 
@@ -30,6 +32,12 @@ Examples:
 }
 
 const result = await scan(args.target, { ignore: args.ignore })
+
+if (args.output) {
+  const html = generateHtml(result)
+  await writeFile(args.output, html, 'utf-8')
+  console.log(`Report saved to ${args.output}`)
+}
 
 if (args.json) {
   printJson(result)
