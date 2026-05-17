@@ -11,7 +11,9 @@ export const credentialPatterns: PatternMatch[] = [
   {
     name: 'JWT Token',
     severity: 'HIGH',
-    pattern: /eyJ[a-zA-Z0-9_\-]+\.eyJ[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+/g,
+    // Require all three parts and minimum realistic lengths to reduce false positives
+    // on base64-encoded strings that happen to start with eyJ
+    pattern: /eyJ[a-zA-Z0-9_\-]{10,}\.eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}/g,
     mask: (match) => match.slice(0, 12) + '...[jwt]',
   },
   {
