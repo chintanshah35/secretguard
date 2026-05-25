@@ -23,6 +23,7 @@ export async function matchFile(
   const findings: Finding[] = []
 
   for (const pattern of patterns) {
+    if (pattern.skipFiles?.test(filePath)) continue
     // Reset stateful regex before each file
     pattern.pattern.lastIndex = 0
 

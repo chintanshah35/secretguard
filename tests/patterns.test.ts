@@ -45,6 +45,16 @@ describe('PII patterns', () => {
     expect(entry.filter!('1111111111')).toBe(false)
   })
 
+  it('skips PII patterns in test and fixture files', () => {
+    const entry = findPattern(piiPatterns, 'Email Address')
+    expect(entry.skipFiles!.test('/src/auth.test.ts')).toBe(true)
+    expect(entry.skipFiles!.test('/src/__tests__/auth.ts')).toBe(true)
+    expect(entry.skipFiles!.test('/src/fixtures/users.ts')).toBe(true)
+    expect(entry.skipFiles!.test('/src/mocks/data.ts')).toBe(true)
+    expect(entry.skipFiles!.test('/src/auth.ts')).toBe(false)
+    expect(entry.skipFiles!.test('/src/controllers/user.ts')).toBe(false)
+  })
+
   it('detects SSNs', () => {
     const { pattern } = findPattern(piiPatterns, 'SSN')
     expect(matches(pattern, 'ssn: 123-45-6789')).toHaveLength(1)
