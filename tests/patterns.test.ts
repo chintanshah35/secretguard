@@ -19,16 +19,30 @@ function matches(pattern: RegExp, input: string): string[] {
 }
 
 describe('PII patterns', () => {
-  it('detects email addresses', () => {
-    const { pattern } = findPattern(piiPatterns, 'Email Address')
-    expect(matches(pattern, 'contact user@example.com today')).toEqual(['user@example.com'])
-    expect(matches(pattern, 'no email here')).toEqual([])
+  it('detects real email addresses', () => {
+    const entry = findPattern(piiPatterns, 'Email Address')
+    const real = matches(entry.pattern, 'contact chintan@gmail.com today')
+    expect(real.filter((m) => entry.filter!(m))).toHaveLength(1)
   })
 
-  it('detects US phone numbers', () => {
-    const { pattern } = findPattern(piiPatterns, 'Phone Number (US)')
-    expect(matches(pattern, 'call 555-123-4567 now')).toHaveLength(1)
-    expect(matches(pattern, '(555) 123-4567')).toHaveLength(1)
+  it('filters fake email domains', () => {
+    const entry = findPattern(piiPatterns, 'Email Address')
+    const fakes = ['user@example.com', 'test@test.com', 'admin@localhost', 'foo@foo.com']
+    for (const email of fakes) {
+      expect(entry.filter!(email)).toBe(false)
+    }
+  })
+
+  it('detects real US phone numbers', () => {
+    const entry = findPattern(piiPatterns, 'Phone Number (US)')
+    expect(entry.filter!('415-823-9147')).toBe(true)
+  })
+
+  it('filters fake US phone numbers', () => {
+    const entry = findPattern(piiPatterns, 'Phone Number (US)')
+    expect(entry.filter!('555-123-4567')).toBe(false)
+    expect(entry.filter!('1234567890')).toBe(false)
+    expect(entry.filter!('1111111111')).toBe(false)
   })
 
   it('detects SSNs', () => {

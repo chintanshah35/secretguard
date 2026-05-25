@@ -5,6 +5,8 @@ export type PatternMatch = {
   severity: Severity
   pattern: RegExp
   mask: (match: string) => string
+  /** Return false to skip this match — use to reduce false positives */
+  filter?: (match: string) => boolean
 }
 
 export type Finding = {
