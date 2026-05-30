@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "keywords": [
     "security",
@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/chintanshah35/secretscan#readme",
   "devDependencies": {
+    "@types/node": "^25.9.1",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
