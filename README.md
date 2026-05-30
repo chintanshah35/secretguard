@@ -6,27 +6,37 @@ Scan your source code for secrets, credentials, and PII before they reach produc
 npx secretscan .
 ```
 
+Exits with code `1` if any CRITICAL findings are detected — drop it into your CI pipeline and it just works.
+
 ## What it detects
 
-**Credentials (CRITICAL/HIGH)**
-- AWS access keys and secret keys
-- GitHub personal access, app, and OAuth tokens
-- Stripe live secret and publishable keys
-- JWT tokens
+**Credentials — CRITICAL**
+- AWS access keys (`AKIA...`) and secret keys
+- GitHub tokens (`ghp_`, `ghs_`, `gho_`)
+- Stripe live keys (`sk_live_`, `pk_live_`)
 - RSA, EC, and OpenSSH private keys
-- Generic API keys
 
-**PII (MEDIUM)**
+**Credentials — HIGH**
+- JWT tokens
+- Generic API keys (high-entropy strings assigned to `api_key`, `API_KEY`, etc.)
+
+**PII — MEDIUM**
 - Email addresses
 - US and international phone numbers
-- Social Security Numbers (SSN)
-- Credit card numbers
+- Social Security Numbers
+- Credit card numbers (Visa, Mastercard, Amex, Discover)
+
+All findings are shown **masked** in output — raw secrets are never printed.
 
 ## Install
 
 ```bash
 npm install -g secretscan
-# or use without installing
+```
+
+Or use without installing:
+
+```bash
 npx secretscan .
 ```
 
@@ -39,25 +49,53 @@ secretscan .
 # Scan a specific path
 secretscan ./src
 
-# Ignore additional directories
-secretscan . --ignore tests --ignore fixtures
+# Ignore additional paths (repeatable)
+secretscan . --ignore tests --ignore fixtures --ignore __mocks__
 
-# Output as JSON (useful for CI)
+# Output as JSON
 secretscan . --json
 
 # Save HTML report
 secretscan . --output report.html
+
+# Combine flags
+secretscan . --ignore tests --json
 ```
 
 ## CI/CD
 
-secretscan exits with code `1` if any CRITICAL findings are detected, making it easy to fail CI pipelines.
-
 ```yaml
 # GitHub Actions
-- name: Scan for secrets
-  run: npx secretscan . --ignore node_modules
+- name: Scan for secrets and PII
+  run: npx secretscan . --ignore node_modules --ignore dist
 ```
+
+```bash
+# Pre-commit hook
+secretscan . && git commit
+```
+
+## Programmatic API
+
+```typescript
+import { scan } from 'secretscan'
+
+const result = await scan('./src', {
+  ignore: ['tests'],
+})
+
+console.log(result.findings)   // Finding[]
+console.log(result.scanned)    // number of files scanned
+console.log(result.duration)   // ms
+```
+
+## Output formats
+
+**Terminal (default)** — colored, grouped by severity, values masked
+
+**JSON (`--json`)** — structured output with summary counts, for piping to other tools
+
+**HTML (`--output report.html`)** — shareable report with a findings table and severity summary
 
 ## License
 
