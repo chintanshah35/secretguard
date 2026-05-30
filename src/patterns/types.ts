@@ -22,3 +22,8 @@ export type ScanResult = {
   findings: Finding[]
   duration: number
 }
+
+export type ScanOptions = {
+  ignore?: string[]
+  patterns?: PatternMatch[]
+}
