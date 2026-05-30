@@ -17,6 +17,30 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => match.slice(0, 12) + '...[jwt]',
   },
   {
+    name: 'OpenAI API Key',
+    severity: 'CRITICAL',
+    pattern: /\bsk-[a-zA-Z0-9]{20}T3BlbkFJ[a-zA-Z0-9]{20}\b/g,
+    mask: (match) => match.slice(0, 7) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Anthropic API Key',
+    severity: 'CRITICAL',
+    pattern: /\bsk-ant-[a-zA-Z0-9\-_]{93}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Slack Bot Token',
+    severity: 'CRITICAL',
+    pattern: /\bxoxb-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Slack User Token',
+    severity: 'CRITICAL',
+    pattern: /\bxoxp-[0-9]{10,13}-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{32}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
     name: 'AWS Access Key',
     severity: 'CRITICAL',
     pattern: /\bAKIA[0-9A-Z]{16}\b/g,
