@@ -1,6 +1,6 @@
 {
   "name": "secretscan",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scan source code for secrets, credentials, and PII",
   "type": "module",
   "main": "dist/index.js",
@@ -23,6 +23,18 @@
   ],
   "author": "Chintan Shah",
   "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chintanshah35/secretscan"
+  },
+  "bugs": {
+    "url": "https://github.com/chintanshah35/secretscan/issues"
+  },
+  "homepage": "https://github.com/chintanshah35/secretscan#readme",
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
