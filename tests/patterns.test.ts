@@ -53,7 +53,9 @@ describe('Credential patterns', () => {
 
   it('detects GitHub tokens', () => {
     const ghp = findPattern(credentialPatterns, 'GitHub Personal Access Token')
-    expect(matches(ghp.pattern, 'ghp_abcdefghijklmnopqrstuvwxyz12345678')).toHaveLength(1)
+    // ghp_ + exactly 36 alphanumeric chars
+    expect(matches(ghp.pattern, 'ghp_abcdefghijklmnopqrstuvwxyz1234567890')).toHaveLength(1)
+    expect(matches(ghp.pattern, 'ghp_tooshort')).toHaveLength(0)
   })
 
   it('detects Stripe live keys', () => {
