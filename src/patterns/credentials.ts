@@ -109,6 +109,34 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => maskSecret(match),
   },
   {
+    name: 'Database URL (PostgreSQL)',
+    severity: 'CRITICAL',
+    pattern: /postgres(?:ql)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    mask: (match) => {
+      const url = new URL(match)
+      return `${url.protocol}//****:****@${url.host}${url.pathname}`
+    },
+  },
+  {
+    name: 'Database URL (MySQL)',
+    severity: 'CRITICAL',
+    pattern: /mysql:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    mask: (match) => {
+      try {
+        const url = new URL(match)
+        return `mysql://****:****@${url.host}${url.pathname}`
+      } catch {
+        return 'mysql://****:****@[redacted]'
+      }
+    },
+  },
+  {
+    name: 'Database URL (MongoDB)',
+    severity: 'CRITICAL',
+    pattern: /mongodb(?:\+srv)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
+  },
+  {
     name: 'RSA Private Key',
     severity: 'CRITICAL',
     pattern: /-----BEGIN RSA PRIVATE KEY-----[\s\S]+?-----END RSA PRIVATE KEY-----/g,
