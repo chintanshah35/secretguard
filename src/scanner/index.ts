@@ -1,12 +1,7 @@
 import { walkFiles } from './walker.js'
 import { matchFile } from './matcher.js'
 import { allPatterns } from '../patterns/index.js'
-import type { ScanResult } from '../patterns/types.js'
-
-export type ScanOptions = {
-  ignore?: string[]
-  patterns?: typeof allPatterns
-}
+import type { ScanResult, ScanOptions } from '../patterns/types.js'
 
 export async function scan(targetPath: string, options: ScanOptions = {}): Promise<ScanResult> {
   const patterns = options.patterns ?? allPatterns
