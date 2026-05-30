@@ -84,6 +84,24 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => match.slice(0, 12) + '****' + match.slice(-4),
   },
   {
+    name: 'SendGrid API Key',
+    severity: 'CRITICAL',
+    pattern: /\bSG\.[a-zA-Z0-9_\-]{22}\.[a-zA-Z0-9_\-]{43}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+  {
+    name: 'npm Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bnpm_[a-zA-Z0-9]{36}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Google API Key',
+    severity: 'HIGH',
+    pattern: /\bAIzaSy[a-zA-Z0-9_\-]{33}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
     name: 'Generic API Key',
     severity: 'HIGH',
     // High-entropy 32+ char alphanumeric strings assigned to api_key/apiKey/API_KEY
