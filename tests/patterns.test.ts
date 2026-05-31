@@ -60,7 +60,9 @@ describe('Credential patterns', () => {
 
   it('detects Stripe live keys', () => {
     const { pattern } = findPattern(credentialPatterns, 'Stripe Live Secret Key')
-    expect(matches(pattern, '["sk", "live", "a".repeat(24)].join("_")')).toHaveLength(1)
+    // Constructed dynamically — never stored as a literal to avoid false positives in scanners
+    const fakeKey = ['sk', 'live', 'a'.repeat(24)].join('_')
+    expect(matches(pattern, fakeKey)).toHaveLength(1)
     expect(matches(pattern, 'sk_test_notlive')).toHaveLength(0)
   })
 })

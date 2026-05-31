@@ -113,8 +113,12 @@ export const credentialPatterns: PatternMatch[] = [
     severity: 'CRITICAL',
     pattern: /postgres(?:ql)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
     mask: (match) => {
-      const url = new URL(match)
-      return `${url.protocol}//****:****@${url.host}${url.pathname}`
+      try {
+        const url = new URL(match)
+        return `${url.protocol}//****:****@${url.host}${url.pathname}`
+      } catch {
+        return 'postgres://****:****@[redacted]'
+      }
     },
   },
   {
