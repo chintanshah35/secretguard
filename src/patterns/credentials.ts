@@ -154,4 +154,35 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]+?-----END OPENSSH PRIVATE KEY-----/g,
     mask: () => '-----BEGIN OPENSSH PRIVATE KEY----- [redacted] -----END OPENSSH PRIVATE KEY-----',
   },
+  {
+    name: 'PGP Private Key',
+    severity: 'CRITICAL',
+    pattern: /-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]+?-----END PGP PRIVATE KEY BLOCK-----/g,
+    mask: () => '-----BEGIN PGP PRIVATE KEY BLOCK----- [redacted] -----END PGP PRIVATE KEY BLOCK-----',
+  },
+  {
+    name: 'GitLab Personal Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bglpat-[a-zA-Z0-9_\-]{20}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'GitHub Fine-Grained Token',
+    severity: 'CRITICAL',
+    pattern: /\bgithub_pat_[a-zA-Z0-9_]{82}\b/g,
+    mask: (match) => match.slice(0, 14) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Twilio Account SID',
+    severity: 'HIGH',
+    // Twilio SIDs always start with AC and are 34 chars total
+    pattern: /\bAC[a-f0-9]{32}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Twilio Auth Token',
+    severity: 'CRITICAL',
+    pattern: /(?:twilio[_\-]?auth[_\-]?token|TWILIO_AUTH_TOKEN)["\s=:]+["']?([a-f0-9]{32})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
 ]
