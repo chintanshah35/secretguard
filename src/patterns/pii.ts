@@ -47,4 +47,14 @@ export const piiPatterns: PatternMatch[] = [
       return '**** **** **** ' + digits.slice(-4)
     },
   },
+  {
+    name: 'IPv4 Address',
+    severity: 'LOW',
+    // Excludes obviously safe ranges: localhost (127.x), private (10.x, 192.168.x, 172.16-31.x)
+    pattern: /\b(?!127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b/g,
+    mask: (match) => {
+      const parts = match.split('.')
+      return `${parts[0]}.${parts[1]}.***.***`
+    },
+  },
 ]
