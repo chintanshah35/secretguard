@@ -10,22 +10,39 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 
 ## What it detects
 
+30 patterns across credentials and PII, grouped by severity.
+
 **Credentials — CRITICAL**
 - AWS access keys (`AKIA...`) and secret keys
-- GitHub tokens (`ghp_`, `ghs_`, `gho_`)
+- OpenAI API keys (`sk-...`)
+- Anthropic API keys (`sk-ant-...`)
+- GitHub tokens (`ghp_`, `ghs_`, `gho_`, `github_pat_`)
+- GitLab personal access tokens (`glpat-`)
+- Slack bot and user tokens (`xoxb-`, `xoxp-`)
+- SendGrid API keys (`SG.`)
+- npm access tokens (`npm_`)
 - Stripe live secret keys (`sk_live_`)
-- RSA, EC, and OpenSSH private keys
+- Twilio auth tokens
+- Database URLs (PostgreSQL, MySQL, MongoDB — credentials in URL)
+- RSA, EC, OpenSSH, and PGP private keys
 
 **Credentials — HIGH**
 - JWT tokens
 - Stripe live publishable keys (`pk_live_`)
+- Google API keys (`AIzaSy...`)
+- Twilio Account SIDs
 - Generic API keys (high-entropy strings assigned to `api_key`, `API_KEY`, etc.)
+
+**PII — CRITICAL**
+- Social Security Numbers (SSN)
+- Credit card numbers (Visa, Mastercard, Amex, Discover)
 
 **PII — MEDIUM**
 - Email addresses
 - US and international phone numbers
-- Social Security Numbers (SSN)
-- Credit card numbers (Visa, Mastercard, Amex, Discover)
+
+**PII — LOW**
+- Public IPv4 addresses (private ranges excluded)
 
 All findings are shown **masked** in output — raw secrets are never printed.
 
