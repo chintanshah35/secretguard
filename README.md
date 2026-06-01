@@ -1,9 +1,9 @@
-# secretscan
+# secretguard
 
 Scan your source code for secrets, credentials, and PII before they reach production.
 
 ```bash
-npx secretscan .
+npx secretguard .
 ```
 
 Exits with code `1` if any CRITICAL findings are detected — drop it into your CI pipeline and it just works.
@@ -49,37 +49,37 @@ All findings are shown **masked** in output — raw secrets are never printed.
 ## Install
 
 ```bash
-npm install -g secretscan
+npm install -g secretguard
 ```
 
 Or use without installing:
 
 ```bash
-npx secretscan .
+npx secretguard .
 ```
 
 ## Usage
 
 ```bash
 # Scan current directory
-secretscan .
+secretguard .
 
 # Scan a specific path
-secretscan ./src
+secretguard ./src
 
 # Ignore additional paths (repeatable, -i shorthand works too)
-secretscan . --ignore tests --ignore fixtures
-secretscan . -i tests -i fixtures
+secretguard . --ignore tests --ignore fixtures
+secretguard . -i tests -i fixtures
 
 # Output as JSON
-secretscan . --json
+secretguard . --json
 
 # Save HTML report (-o shorthand works too)
-secretscan . --output report.html
-secretscan . -o report.html
+secretguard . --output report.html
+secretguard . -o report.html
 
 # Combine flags
-secretscan . -i tests --json
+secretguard . -i tests --json
 ```
 
 ## Defaults
@@ -98,12 +98,12 @@ Binary files (images, PDFs, archives, compiled binaries) are skipped automatical
 ```yaml
 # GitHub Actions
 - name: Scan for secrets and PII
-  run: npx secretscan . --ignore tests
+  run: npx secretguard . --ignore tests
 ```
 
 ```bash
 # Pre-commit hook (in .git/hooks/pre-commit)
-secretscan . && git commit
+secretguard . && git commit
 ```
 
 The exit code is `0` when no CRITICAL findings are detected, `1` otherwise. This makes it straightforward to block CI on real secrets while still reporting HIGH/MEDIUM findings.
@@ -119,8 +119,8 @@ The exit code is `0` when no CRITICAL findings are detected, `1` otherwise. This
 ## Programmatic API
 
 ```typescript
-import { scan, piiPatterns, credentialPatterns } from 'secretscan'
-import type { ScanResult, Finding } from 'secretscan'
+import { scan, piiPatterns, credentialPatterns } from 'secretguard'
+import type { ScanResult, Finding } from 'secretguard'
 
 // Scan with defaults
 const result = await scan('./src')

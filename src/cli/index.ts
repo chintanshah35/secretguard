@@ -11,10 +11,10 @@ const args = parseArgs(process.argv)
 
 if (args.help) {
   console.log(`
-secretscan — scan source code for secrets, credentials, and PII
+secretguard — scan source code for secrets, credentials, and PII
 
 Usage:
-  secretscan [path] [options]
+  secretguard [path] [options]
 
 Options:
   --ignore, -i <path>   Ignore a path (repeatable)
@@ -23,10 +23,10 @@ Options:
   --help, -h            Show this help message
 
 Examples:
-  secretscan .
-  secretscan ./src --ignore tests
-  secretscan . --json
-  secretscan . --output report.html
+  secretguard .
+  secretguard ./src --ignore tests
+  secretguard . --json
+  secretguard . --output report.html
   `)
   process.exit(0)
 }

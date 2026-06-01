@@ -48,7 +48,7 @@ export function printReport(result: ScanResult): void {
     return
   }
 
-  console.log(`\n${colors.bold}secretscan found ${result.findings.length} issue(s) in ${result.scanned} files${colors.reset}\n`)
+  console.log(`\n${colors.bold}secretguard found ${result.findings.length} issue(s) in ${result.scanned} files${colors.reset}\n`)
 
   const groups = groupBySeverity(result.findings)
 

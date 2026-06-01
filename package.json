@@ -1,12 +1,12 @@
 {
-  "name": "secretscan",
+  "name": "secretguard",
   "version": "0.2.0",
   "description": "Scan source code for secrets, credentials, and PII",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "secretscan": "dist/cli/index.js"
+    "secretguard": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsup",
@@ -29,12 +29,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/chintanshah35/secretscan"
+    "url": "https://github.com/chintanshah35/secretguard"
   },
   "bugs": {
-    "url": "https://github.com/chintanshah35/secretscan/issues"
+    "url": "https://github.com/chintanshah35/secretguard/issues"
   },
-  "homepage": "https://github.com/chintanshah35/secretscan#readme",
+  "homepage": "https://github.com/chintanshah35/secretguard#readme",
   "devDependencies": {
     "@types/node": "^25.9.1",
     "tsup": "^8.0.0",
