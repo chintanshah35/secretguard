@@ -46,6 +46,20 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 
 All findings are shown **masked** in output — raw secrets are never printed.
 
+## PII and false positives
+
+PII scanning is tuned for production source, not test fixtures.
+
+**Skipped in test-like paths** — email, phone, SSN, credit card, and public IP patterns do not run in:
+
+- `*.test.*`, `*.spec.*`
+- `__tests__/`, `__mocks__/`
+- `fixtures/`, `mocks/`, `stubs/`
+
+**Filtered fake values** — in other files, obvious placeholders are ignored (e.g. `user@example.com`, `test@test.com`, US `555-` numbers, all-same-digit phones).
+
+**Credentials are always scanned** — API keys and tokens in test files are still reported. A real `ghp_` or `sk_live_` in a test is still a leak risk.
+
 ## Install
 
 ```bash
