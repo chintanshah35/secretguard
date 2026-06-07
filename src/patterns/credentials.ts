@@ -221,4 +221,50 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /(?:cloudflare[_\-]?(?:global[_\-]?)?(?:api[_\-]?)?key|CF_API_KEY)["\s=:]+["']?([a-f0-9]{37})["']?/gi,
     mask: (match) => maskSecret(match),
   },
+  {
+    name: 'Azure Storage Connection String',
+    severity: 'CRITICAL',
+    pattern: /DefaultEndpointsProtocol=https?;AccountName=[^;]+;AccountKey=[A-Za-z0-9+/]{86}==;[^\s"']*/g,
+    mask: (match) => {
+      const accountName = match.match(/AccountName=([^;]+)/)?.[1] ?? '***'
+      return `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=****[redacted]`
+    },
+  },
+  {
+    name: 'Azure Client Secret',
+    severity: 'CRITICAL',
+    pattern: /(?:azure[_\-]?client[_\-]?secret|AZURE_CLIENT_SECRET)["\s=:]+["']?([a-zA-Z0-9~._\-]{34,40})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'Firebase Service Account Key',
+    severity: 'CRITICAL',
+    // Service account JSON contains "private_key_id" and a private key block
+    pattern: /"private_key_id"\s*:\s*"[a-f0-9]{40}"/g,
+    mask: () => '"private_key_id": "****[redacted]"',
+  },
+  {
+    name: 'Firebase Web API Key',
+    severity: 'HIGH',
+    pattern: /(?:firebase[_\-]?(?:api[_\-]?)?key|FIREBASE_API_KEY)["\s=:]+["']?(AIzaSy[a-zA-Z0-9_\-]{33})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'PyPI API Token',
+    severity: 'CRITICAL',
+    pattern: /\bpypi-[A-Za-z0-9_\-]{50,}\b/g,
+    mask: (match) => match.slice(0, 9) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Doppler Service Token',
+    severity: 'CRITICAL',
+    pattern: /\bdp\.st\.[a-z0-9]+\.[A-Za-z0-9]{40,}\b/g,
+    mask: (match) => match.slice(0, 12) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Doppler Personal Token',
+    severity: 'CRITICAL',
+    pattern: /\bdp\.pt\.[A-Za-z0-9]{40,}\b/g,
+    mask: (match) => match.slice(0, 9) + '****' + match.slice(-4),
+  },
 ]
