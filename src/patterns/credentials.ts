@@ -189,4 +189,36 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /(?:twilio[_\-]?auth[_\-]?token|TWILIO_AUTH_TOKEN)["\s=:]+["']?([a-f0-9]{32})["']?/gi,
     mask: (match) => maskSecret(match),
   },
+  {
+    name: 'HuggingFace Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bhf_[a-zA-Z0-9]{34,}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Vercel Access Token',
+    severity: 'CRITICAL',
+    // Vercel personal tokens are 24-char base62 strings assigned to VERCEL_TOKEN etc.
+    pattern: /(?:vercel[_\-]?(?:api[_\-]?)?token|VERCEL_TOKEN)["\s=:]+["']?([a-zA-Z0-9]{24,})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'Supabase Service Role Key',
+    severity: 'CRITICAL',
+    // Supabase service_role JWTs have a fixed header and are >200 chars
+    pattern: /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_\-]{60,}\.[a-zA-Z0-9_\-]{43}/g,
+    mask: (match) => match.slice(0, 20) + '...[supabase-jwt]',
+  },
+  {
+    name: 'Cloudflare API Token',
+    severity: 'CRITICAL',
+    pattern: /(?:cloudflare[_\-]?(?:api[_\-]?)?token|CF_API_TOKEN)["\s=:]+["']?([a-zA-Z0-9_\-]{40})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'Cloudflare Global API Key',
+    severity: 'CRITICAL',
+    pattern: /(?:cloudflare[_\-]?(?:global[_\-]?)?(?:api[_\-]?)?key|CF_API_KEY)["\s=:]+["']?([a-f0-9]{37})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
 ]
