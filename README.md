@@ -10,7 +10,7 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 
 ## What it detects
 
-30 patterns across credentials and PII, grouped by severity.
+46 patterns across credentials and PII, grouped by severity.
 
 **Credentials — CRITICAL**
 - AWS access keys (`AKIA...`) and secret keys
@@ -23,6 +23,14 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 - npm access tokens (`npm_`)
 - Stripe live secret keys (`sk_live_`)
 - Twilio auth tokens
+- HuggingFace access tokens (`hf_...`)
+- Vercel access tokens
+- Supabase service role keys (long JWT)
+- Cloudflare API tokens and global API keys
+- Azure storage connection strings and client secrets
+- Firebase service account key markers
+- PyPI API tokens (`pypi-...`)
+- Doppler service and personal tokens (`dp.st.`, `dp.pt.`)
 - Database URLs (PostgreSQL, MySQL, MongoDB — credentials in URL)
 - RSA, EC, OpenSSH, and PGP private keys
 
@@ -30,6 +38,7 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 - JWT tokens
 - Stripe live publishable keys (`pk_live_`)
 - Google API keys (`AIzaSy...`)
+- Firebase web API keys
 - Twilio Account SIDs
 - Generic API keys (high-entropy strings assigned to `api_key`, `API_KEY`, etc.)
 
@@ -153,6 +162,10 @@ console.log(result.duration)  // ms
 ## Requirements
 
 Node.js 18 or later.
+
+## Articles
+
+- **[How to Scan for Hardcoded Secrets in a Node.js Project (GitHub Actions Guide)](https://dev.to/chintanshah35/how-to-scan-for-hardcoded-secrets-in-a-nodejs-project-github-actions-guide)** - Dev.to
 
 ## License
 
