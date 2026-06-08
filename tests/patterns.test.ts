@@ -89,4 +89,60 @@ describe('Credential patterns', () => {
     expect(matches(pattern, fakeKey)).toHaveLength(1)
     expect(matches(pattern, 'sk_test_notlive')).toHaveLength(0)
   })
+
+  it('detects HuggingFace access tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'HuggingFace Access Token')
+    const token = 'hf_' + 'a'.repeat(34)
+    expect(matches(pattern, `HF_TOKEN="${token}"`)).toHaveLength(1)
+    expect(matches(pattern, 'hf_short')).toHaveLength(0)
+  })
+
+  it('detects Vercel access tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Vercel Access Token')
+    expect(matches(pattern, 'VERCEL_TOKEN="aBcDeFgHiJkLmNoPqRsTuVwX"')).toHaveLength(1)
+    expect(matches(pattern, 'VERCEL_TOKEN="tooshort"')).toHaveLength(0)
+  })
+
+  it('detects Supabase service role JWTs', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Supabase Service Role Key')
+    const header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+    const payload = 'e'.repeat(70)
+    const sig = 'f'.repeat(43)
+    expect(matches(pattern, `${header}.${payload}.${sig}`)).toHaveLength(1)
+  })
+
+  it('detects Cloudflare API tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Cloudflare API Token')
+    expect(matches(pattern, `CF_API_TOKEN="${'a'.repeat(40)}"`)).toHaveLength(1)
+  })
+
+  it('detects Azure storage connection strings', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Azure Storage Connection String')
+    const key = 'A'.repeat(86) + '=='
+    const conn = `DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=${key};EndpointSuffix=core.windows.net`
+    expect(matches(pattern, conn)).toHaveLength(1)
+  })
+
+  it('detects PyPI API tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'PyPI API Token')
+    const token = 'pypi-' + 'A'.repeat(50)
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'pypi-tooshort')).toHaveLength(0)
+  })
+
+  it('detects Doppler service tokens', () => {
+    const service = findPattern(credentialPatterns, 'Doppler Service Token')
+    const token = 'dp.st.dev.' + 'A'.repeat(40)
+    expect(matches(service.pattern, token)).toHaveLength(1)
+
+    const personal = findPattern(credentialPatterns, 'Doppler Personal Token')
+    const ptoken = 'dp.pt.' + 'A'.repeat(40)
+    expect(matches(personal.pattern, ptoken)).toHaveLength(1)
+  })
+
+  it('detects Firebase service account key markers', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Firebase Service Account Key')
+    const keyId = '"private_key_id": "' + 'a'.repeat(40) + '"'
+    expect(matches(pattern, keyId)).toHaveLength(1)
+  })
 })
