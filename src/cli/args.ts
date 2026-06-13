@@ -3,6 +3,7 @@ export type CliArgs = {
   ignore: string[]
   json: boolean
   output: string | null
+  history: boolean
   help: boolean
 }
 
@@ -13,6 +14,7 @@ export function parseArgs(argv: string[]): CliArgs {
     ignore: [],
     json: false,
     output: null,
+    history: false,
     help: false,
   }
 
@@ -22,6 +24,8 @@ export function parseArgs(argv: string[]): CliArgs {
       result.help = true
     } else if (arg === '--json') {
       result.json = true
+    } else if (arg === '--history') {
+      result.history = true
     } else if (arg === '--ignore' || arg === '-i') {
       const value = args[++index]
       if (value) result.ignore.push(value)
