@@ -4,6 +4,8 @@ export type CliArgs = {
   json: boolean
   output: string | null
   history: boolean
+  staged: boolean
+  installHook: boolean
   help: boolean
 }
 
@@ -15,6 +17,8 @@ export function parseArgs(argv: string[]): CliArgs {
     json: false,
     output: null,
     history: false,
+    staged: false,
+    installHook: false,
     help: false,
   }
 
@@ -26,6 +30,10 @@ export function parseArgs(argv: string[]): CliArgs {
       result.json = true
     } else if (arg === '--history') {
       result.history = true
+    } else if (arg === '--staged') {
+      result.staged = true
+    } else if (arg === 'install-hook') {
+      result.installHook = true
     } else if (arg === '--ignore' || arg === '-i') {
       const value = args[++index]
       if (value) result.ignore.push(value)
