@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
+import { readFile, writeFile, unlink } from 'fs/promises'
+import { join } from 'path'
+import { tmpdir } from 'os'
 import { piiPatterns } from '../src/patterns/pii.js'
 import { credentialPatterns } from '../src/patterns/credentials.js'
+import { loadIgnoreFile } from '../src/scanner/ignorefile.js'
 
 function findPattern(patterns: typeof piiPatterns, name: string) {
   const pattern = patterns.find((p) => p.name === name)
@@ -144,5 +148,21 @@ describe('Credential patterns', () => {
     const { pattern } = findPattern(credentialPatterns, 'Firebase Service Account Key')
     const keyId = '"private_key_id": "' + 'a'.repeat(40) + '"'
     expect(matches(pattern, keyId)).toHaveLength(1)
+  })
+})
+
+describe('Ignorefile', () => {
+  it('loads patterns from .secretguardignore', async () => {
+    const dir = tmpdir()
+    const filePath = join(dir, '.secretguardignore')
+    await writeFile(filePath, '# comment\nnode_modules\ndist\n\n.env\n', 'utf-8')
+    const patterns = await loadIgnoreFile(dir)
+    expect(patterns).toEqual(['node_modules', 'dist', '.env'])
+    await unlink(filePath)
+  })
+
+  it('returns empty array when file is missing', async () => {
+    const patterns = await loadIgnoreFile('/tmp/does-not-exist-secretguard-test')
+    expect(patterns).toEqual([])
   })
 })
