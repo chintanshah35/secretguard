@@ -6,6 +6,9 @@ export type CliArgs = {
   history: boolean
   staged: boolean
   installHook: boolean
+  sarif: string | null
+  baseline: string | null
+  updateBaseline: boolean
   help: boolean
 }
 
@@ -19,6 +22,9 @@ export function parseArgs(argv: string[]): CliArgs {
     history: false,
     staged: false,
     installHook: false,
+    sarif: null,
+    baseline: null,
+    updateBaseline: false,
     help: false,
   }
 
@@ -34,6 +40,12 @@ export function parseArgs(argv: string[]): CliArgs {
       result.staged = true
     } else if (arg === 'install-hook') {
       result.installHook = true
+    } else if (arg === '--sarif') {
+      result.sarif = args[++index] ?? null
+    } else if (arg === '--baseline') {
+      result.baseline = args[++index] ?? null
+    } else if (arg === '--update-baseline') {
+      result.updateBaseline = true
     } else if (arg === '--ignore' || arg === '-i') {
       const value = args[++index]
       if (value) result.ignore.push(value)

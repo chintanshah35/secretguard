@@ -7,9 +7,11 @@ import { scanHistory } from '../scanner/history.js'
 import { scanStaged } from '../scanner/staged.js'
 import { loadIgnoreFile } from '../scanner/ignorefile.js'
 import { installHook } from '../install-hook.js'
+import { loadBaseline, filterBaseline, writeBaseline } from '../baseline.js'
 import { printReport, printHistoryReport } from '../reporter/terminal.js'
 import { printJson, printHistoryJson } from '../reporter/json.js'
 import { generateHtml } from '../reporter/html.js'
+import { generateSarif } from '../reporter/sarif.js'
 
 const args = parseArgs(process.argv)
 
@@ -22,12 +24,15 @@ Usage:
   secretguard install-hook [path]
 
 Options:
-  --ignore, -i <path>   Ignore a path (repeatable)
-  --json                Output results as JSON
-  --history             Scan full git commit history
-  --staged              Scan only staged (pre-commit) changes
-  --output, -o <file>   Save HTML report to file
-  --help, -h            Show this help message
+  --ignore, -i <path>       Ignore a path (repeatable)
+  --json                    Output results as JSON
+  --history                 Scan full git commit history
+  --staged                  Scan only staged (pre-commit) changes
+  --sarif <file>            Save SARIF report (for GitHub Code Scanning)
+  --baseline <file>         Ignore findings present in baseline file
+  --update-baseline <file>  Write current findings as new baseline
+  --output, -o <file>       Save HTML report to file
+  --help, -h                Show this help message
 
 Examples:
   secretguard .
@@ -36,6 +41,8 @@ Examples:
   secretguard . --history
   secretguard . --staged
   secretguard install-hook
+  secretguard . --sarif results.sarif
+  secretguard . --baseline .secretguard-baseline.json
   secretguard . --output report.html
   `)
   process.exit(0)
@@ -76,12 +83,32 @@ if (args.history) {
   process.exit(hasCritical ? 1 : 0)
 } else {
   const fileIgnore = await loadIgnoreFile(args.target)
-  const result = await scan(args.target, { ignore: [...args.ignore, ...fileIgnore] })
+  const rawResult = await scan(args.target, { ignore: [...args.ignore, ...fileIgnore] })
+
+  let findings = rawResult.findings
+
+  if (args.baseline) {
+    const baseline = await loadBaseline(args.baseline)
+    findings = filterBaseline(findings, baseline)
+  }
+
+  if (args.updateBaseline && args.baseline) {
+    await writeBaseline(args.baseline, rawResult.findings)
+    console.log(`Baseline written to ${args.baseline}`)
+  }
+
+  const result = { ...rawResult, findings }
 
   if (args.output) {
     const html = generateHtml(result)
     await writeFile(args.output, html, 'utf-8')
-    console.log(`Report saved to ${args.output}`)
+    console.log(`HTML report saved to ${args.output}`)
+  }
+
+  if (args.sarif) {
+    const sarif = generateSarif(result)
+    await writeFile(args.sarif, sarif, 'utf-8')
+    console.log(`SARIF report saved to ${args.sarif}`)
   }
 
   if (args.json) {
