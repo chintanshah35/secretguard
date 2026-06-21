@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { readFile, writeFile, unlink } from 'fs/promises'
+import { writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { piiPatterns } from '../src/patterns/pii.js'
@@ -164,5 +164,76 @@ describe('Ignorefile', () => {
   it('returns empty array when file is missing', async () => {
     const patterns = await loadIgnoreFile('/tmp/does-not-exist-secretguard-test')
     expect(patterns).toEqual([])
+  })
+})
+
+describe('Baseline', () => {
+  it('filters findings present in baseline', async () => {
+    const { filterBaseline, writeBaseline, loadBaseline } = await import('../src/baseline.js')
+    const baselinePath = join(tmpdir(), `sg-baseline-test-${Date.now()}.json`)
+
+    const finding = {
+      file: 'src/config.ts',
+      line: 10,
+      column: 5,
+      pattern: 'AWS Access Key',
+      severity: 'CRITICAL' as const,
+      masked: 'AKIA***EXAMPLE',
+      raw: 'AKIAIOSFODNN7EXAMPLE',
+    }
+
+    await writeBaseline(baselinePath, [finding])
+    const baseline = await loadBaseline(baselinePath)
+    const filtered = filterBaseline([finding], baseline)
+
+    expect(filtered).toHaveLength(0)
+    await unlink(baselinePath)
+  })
+
+  it('keeps findings not in baseline', async () => {
+    const { filterBaseline } = await import('../src/baseline.js')
+    const finding = {
+      file: 'src/config.ts',
+      line: 10,
+      column: 5,
+      pattern: 'AWS Access Key',
+      severity: 'CRITICAL' as const,
+      masked: 'AKIA***EXAMPLE',
+      raw: 'AKIAIOSFODNN7EXAMPLE',
+    }
+
+    const filtered = filterBaseline([finding], new Set())
+    expect(filtered).toHaveLength(1)
+  })
+})
+
+describe('SARIF reporter', () => {
+  it('generates valid SARIF 2.1.0 structure', async () => {
+    const { generateSarif } = await import('../src/reporter/sarif.js')
+
+    const result = {
+      scanned: 1,
+      duration: 100,
+      findings: [
+        {
+          file: 'src/index.ts',
+          line: 5,
+          column: 3,
+          pattern: 'AWS Access Key',
+          severity: 'CRITICAL' as const,
+          masked: 'AKIA***',
+          raw: 'AKIAIOSFODNN7EXAMPLE',
+        },
+      ],
+    }
+
+    const sarif = JSON.parse(generateSarif(result))
+
+    expect(sarif.version).toBe('2.1.0')
+    expect(sarif.runs).toHaveLength(1)
+    expect(sarif.runs[0].tool.driver.name).toBe('secretguard')
+    expect(sarif.runs[0].results).toHaveLength(1)
+    expect(sarif.runs[0].results[0].ruleId).toBe('AWS Access Key')
+    expect(sarif.runs[0].results[0].level).toBe('error')
   })
 })
