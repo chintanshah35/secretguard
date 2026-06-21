@@ -90,19 +90,33 @@ secretguard .
 # Scan a specific path
 secretguard ./src
 
-# Ignore additional paths (repeatable, -i shorthand works too)
+# Ignore additional paths (-i shorthand works too)
 secretguard . --ignore tests --ignore fixtures
-secretguard . -i tests -i fixtures
 
 # Output as JSON
 secretguard . --json
 
 # Save HTML report (-o shorthand works too)
 secretguard . --output report.html
-secretguard . -o report.html
 
-# Combine flags
-secretguard . -i tests --json
+# Scan full git history
+secretguard . --history
+secretguard . --history --json
+
+# Scan only staged changes (useful in pre-commit hooks)
+secretguard . --staged
+
+# Install a git pre-commit hook
+secretguard install-hook
+
+# Save SARIF report (for GitHub Code Scanning upload)
+secretguard . --sarif results.sarif
+
+# Ignore known findings with a baseline
+secretguard . --baseline .secretguard-baseline.json
+
+# Update the baseline to current findings
+secretguard . --baseline .secretguard-baseline.json --update-baseline
 ```
 
 ## Defaults
@@ -116,28 +130,75 @@ node_modules  .git  dist  build  coverage
 
 Binary files (images, PDFs, archives, compiled binaries) are skipped automatically.
 
+Add a `.secretguardignore` file to your project root to ignore additional paths:
+
+```
+# .secretguardignore
+tests/
+fixtures/
+src/mocks/
+```
+
 ## CI/CD
 
 ```yaml
 # GitHub Actions
-- name: Scan for secrets and PII
+- name: Scan for secrets
   run: npx secretguard . --ignore tests
+
+# Upload SARIF to GitHub Security tab
+- name: Scan and upload SARIF
+  run: npx secretguard . --sarif results.sarif
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: results.sarif
 ```
 
 ```bash
-# Pre-commit hook (in .git/hooks/pre-commit)
-secretguard . && git commit
+# Install as a git pre-commit hook
+secretguard install-hook
 ```
 
-The exit code is `0` when no CRITICAL findings are detected, `1` otherwise. This makes it straightforward to block CI on real secrets while still reporting HIGH/MEDIUM findings.
+The hook runs `secretguard --staged` before each commit and blocks if CRITICAL findings are detected. Use `git commit --no-verify` to bypass.
+
+The exit code is `0` when no CRITICAL findings are detected, `1` otherwise.
+
+## Git history scanning
+
+```bash
+# Scan all commits in the repo for leaked secrets
+secretguard . --history
+
+# Get JSON output (useful for piping)
+secretguard . --history --json
+```
+
+Scans every added line across every commit, deduplicates identical findings (same file + pattern + value across multiple commits), and reports with commit hash, author, date, and message.
+
+## Baseline
+
+Use a baseline to suppress findings you've already reviewed and accepted as non-issues:
+
+```bash
+# Generate initial baseline from current findings
+secretguard . --baseline .secretguard-baseline.json --update-baseline
+
+# On future runs, only new findings are shown
+secretguard . --baseline .secretguard-baseline.json
+```
+
+Commit `.secretguard-baseline.json` to your repo so the team shares the same suppression list.
 
 ## Output formats
 
 **Terminal (default)** — colored output, grouped by severity (CRITICAL first), values masked
 
-**JSON (`--json`)** — structured output with summary counts, useful for piping to other tools or parsing in scripts
+**JSON (`--json`)** — structured output with summary counts, useful for piping to other tools
 
 **HTML (`--output report.html`)** — shareable self-contained report with a severity summary and full findings table
+
+**SARIF (`--sarif results.sarif`)** — standard format compatible with GitHub Code Scanning, VS Code SARIF Viewer, and other SAST tools
 
 ## Programmatic API
 
