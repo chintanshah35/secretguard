@@ -239,6 +239,16 @@ export const credentialPatterns: PatternMatch[] = [
     severity: 'HIGH',
     // High-entropy 32+ char alphanumeric strings assigned to api_key/apiKey/API_KEY
     pattern: /(?:api[_\-]?key|apikey|API_KEY)["\s=:]+["']?([a-zA-Z0-9_\-]{32,})["']?/gi,
+    filter: (match) => {
+      const value = match.match(/["']?([a-zA-Z0-9_\-]{32,})["']?\s*$/i)?.[1] ?? match
+      const lower = value.toLowerCase()
+      if (lower.includes('process.env')) return false
+      if (/(?:your|change|insert|replace|example|placeholder|dummy|xxx+|todo|fixme)/i.test(value)) {
+        return false
+      }
+      if (new Set(value.replace(/[^a-z0-9]/gi, '').toLowerCase()).size <= 2) return false
+      return true
+    },
     mask: (match) => maskSecret(match),
   },
   {
