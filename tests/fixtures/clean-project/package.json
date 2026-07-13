@@ -1,0 +1,13 @@
+{
+  "name": "clean-demo-app",
+  "version": "1.0.0",
+  "description": "Sample app used to verify secretguard false positives",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}
