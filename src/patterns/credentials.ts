@@ -65,6 +65,36 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
   },
   {
+    name: 'Slack App Token',
+    severity: 'CRITICAL',
+    pattern: /\bxapp-[0-9]-[A-Z0-9]+-[0-9]+-[a-z0-9]+\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Slack Webhook URL',
+    severity: 'CRITICAL',
+    pattern: /https:\/\/hooks\.slack\.com\/services\/T[A-Z0-9]+\/B[A-Z0-9]+\/[a-zA-Z0-9]+/g,
+    mask: () => 'https://hooks.slack.com/services/****',
+  },
+  {
+    name: 'Discord Bot Token',
+    severity: 'CRITICAL',
+    pattern: /\b[MN][A-Za-z0-9]{23,26}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,38}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Discord Webhook URL',
+    severity: 'CRITICAL',
+    pattern: /https:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/g,
+    mask: () => 'https://discord.com/api/webhooks/****',
+  },
+  {
+    name: 'Telegram Bot Token',
+    severity: 'CRITICAL',
+    pattern: /\b\d{8,10}:AA[a-zA-Z0-9_-]{33}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+            {
     name: 'AWS Access Key',
     severity: 'CRITICAL',
     pattern: /\bAKIA[0-9A-Z]{16}\b/g,
