@@ -23,12 +23,36 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => match.slice(0, 7) + '****' + match.slice(-4),
   },
   {
+    name: 'OpenAI Project Key',
+    severity: 'CRITICAL',
+    pattern: /\bsk-proj-[a-zA-Z0-9_\-]{40,}\b/g,
+    mask: (match) => match.slice(0, 11) + '****' + match.slice(-4),
+  },
+  {
+    name: 'OpenAI Service Account Key',
+    severity: 'CRITICAL',
+    pattern: /\bsk-svcacct-[a-zA-Z0-9_\-]{40,}\b/g,
+    mask: (match) => match.slice(0, 14) + '****' + match.slice(-4),
+  },
+      {
     name: 'Anthropic API Key',
     severity: 'CRITICAL',
     pattern: /\bsk-ant-[a-zA-Z0-9\-_]{93}\b/g,
     mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
   },
   {
+    name: 'Groq API Key',
+    severity: 'CRITICAL',
+    pattern: /\bgsk_[a-zA-Z0-9]{50,}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Replicate API Token',
+    severity: 'CRITICAL',
+    pattern: /\br8_[a-zA-Z0-9]{37}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+      {
     name: 'Slack Bot Token',
     severity: 'CRITICAL',
     pattern: /\bxoxb-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24}\b/g,
@@ -47,6 +71,12 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
   },
   {
+    name: 'AWS Temporary Access Key',
+    severity: 'CRITICAL',
+    pattern: /\bASIA[0-9A-Z]{16}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+    {
     name: 'AWS Secret Key',
     severity: 'CRITICAL',
     // 40-char base62 string following common assignment patterns
