@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { writeFile, unlink } from 'fs/promises'
-import { join } from 'path'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
 import { tmpdir } from 'os'
+import { fileURLToPath } from 'url'
 import { piiPatterns } from '../src/patterns/pii.js'
 import { credentialPatterns } from '../src/patterns/credentials.js'
 import { loadIgnoreFile } from '../src/scanner/ignorefile.js'
@@ -401,6 +403,155 @@ describe('Credential patterns', () => {
   it('ignores redis urls without credentials', () => {
     const { pattern } = findPattern(credentialPatterns, 'Database URL (Redis)')
     expect(matches(pattern, 'redis://localhost:6379')).toHaveLength(0)
+  })
+
+  it('detects JWT tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'JWT Token')
+    const token = 'eyJ' + 'a'.repeat(12) + '.eyJ' + 'b'.repeat(12) + '.' + 'c'.repeat(12)
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'eyJtoo.short.jwt')).toHaveLength(0)
+  })
+
+  it('detects legacy OpenAI API keys', () => {
+    const { pattern } = findPattern(credentialPatterns, 'OpenAI API Key')
+    const token = 'sk-' + 'a'.repeat(20) + 'T3BlbkFJ' + 'b'.repeat(20)
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'sk-short')).toHaveLength(0)
+  })
+
+  it('detects Anthropic API keys', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Anthropic API Key')
+    const token = 'sk-ant-' + 'a'.repeat(93)
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'sk-ant-short')).toHaveLength(0)
+  })
+
+  it('detects Slack bot and user tokens', () => {
+    const bot = findPattern(credentialPatterns, 'Slack Bot Token')
+    const user = findPattern(credentialPatterns, 'Slack User Token')
+    expect(matches(bot.pattern, 'xoxb-1234567890-1234567890-' + 'a'.repeat(24))).toHaveLength(1)
+    expect(matches(user.pattern, 'xoxp-1234567890-1234567890-1234567890-' + 'a'.repeat(32))).toHaveLength(1)
+    expect(matches(bot.pattern, 'xoxb-short')).toHaveLength(0)
+  })
+
+  it('detects Discord bot tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Discord Bot Token')
+    const token = 'M' + 'a'.repeat(23) + '.' + 'b'.repeat(6) + '.' + 'c'.repeat(27)
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'M.short.token')).toHaveLength(0)
+  })
+
+  it('detects AWS secret keys with assignment context', () => {
+    const { pattern } = findPattern(credentialPatterns, 'AWS Secret Key')
+    expect(matches(pattern, `AWS_SECRET_ACCESS_KEY=${'A'.repeat(40)}`)).toHaveLength(1)
+    expect(matches(pattern, 'A'.repeat(40))).toHaveLength(0)
+  })
+
+  it('detects GitHub app and OAuth tokens', () => {
+    const app = findPattern(credentialPatterns, 'GitHub App Token')
+    const oauth = findPattern(credentialPatterns, 'GitHub OAuth Token')
+    expect(matches(app.pattern, 'ghs_' + 'a'.repeat(36))).toHaveLength(1)
+    expect(matches(oauth.pattern, 'gho_' + 'a'.repeat(36))).toHaveLength(1)
+    expect(matches(app.pattern, 'ghs_short')).toHaveLength(0)
+  })
+
+  it('detects Stripe live publishable keys', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Stripe Live Publishable Key')
+    const token = ['pk', 'live', 'a'.repeat(24)].join('_')
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'pk_test_abc')).toHaveLength(0)
+  })
+
+  it('detects SendGrid API keys', () => {
+    const { pattern } = findPattern(credentialPatterns, 'SendGrid API Key')
+    const token = 'SG.' + 'a'.repeat(22) + '.' + 'b'.repeat(43)
+    expect(matches(pattern, token)).toHaveLength(1)
+    expect(matches(pattern, 'SG.short')).toHaveLength(0)
+  })
+
+  it('detects npm access tokens', () => {
+    const { pattern } = findPattern(credentialPatterns, 'npm Access Token')
+    expect(matches(pattern, 'npm_' + 'a'.repeat(36))).toHaveLength(1)
+    expect(matches(pattern, 'npm_short')).toHaveLength(0)
+  })
+
+  it('detects Google API keys', () => {
+    const { pattern } = findPattern(credentialPatterns, 'Google API Key')
+    expect(matches(pattern, 'AIzaSy' + 'a'.repeat(33))).toHaveLength(1)
+    expect(matches(pattern, 'AIzaSyShort')).toHaveLength(0)
+  })
+
+  it('detects Postgres MySQL and Mongo URLs with credentials', () => {
+    const postgres = findPattern(credentialPatterns, 'Database URL (PostgreSQL)')
+    const mysql = findPattern(credentialPatterns, 'Database URL (MySQL)')
+    const mongo = findPattern(credentialPatterns, 'Database URL (MongoDB)')
+    expect(matches(postgres.pattern, 'postgres://user:pass@localhost:5432/db')).toHaveLength(1)
+    expect(matches(mysql.pattern, 'mysql://user:pass@localhost:3306/db')).toHaveLength(1)
+    expect(matches(mongo.pattern, 'mongodb://user:pass@localhost:27017/db')).toHaveLength(1)
+    expect(matches(postgres.pattern, 'postgres://localhost:5432/db')).toHaveLength(0)
+  })
+
+  it('detects RSA EC OpenSSH and PGP private keys', () => {
+    const rsa = findPattern(credentialPatterns, 'RSA Private Key')
+    const ec = findPattern(credentialPatterns, 'EC Private Key')
+    const openssh = findPattern(credentialPatterns, 'OpenSSH Private Key')
+    const pgp = findPattern(credentialPatterns, 'PGP Private Key')
+    expect(matches(rsa.pattern, '-----BEGIN RSA PRIVATE KEY-----\nMIIE\n-----END RSA PRIVATE KEY-----')).toHaveLength(1)
+    expect(matches(ec.pattern, '-----BEGIN EC PRIVATE KEY-----\nMIIE\n-----END EC PRIVATE KEY-----')).toHaveLength(1)
+    expect(matches(openssh.pattern, '-----BEGIN OPENSSH PRIVATE KEY-----\nMIIE\n-----END OPENSSH PRIVATE KEY-----')).toHaveLength(1)
+    expect(matches(pgp.pattern, '-----BEGIN PGP PRIVATE KEY BLOCK-----\nMIIE\n-----END PGP PRIVATE KEY BLOCK-----')).toHaveLength(1)
+  })
+
+  it('detects GitLab PATs and GitHub fine-grained tokens', () => {
+    const gitlab = findPattern(credentialPatterns, 'GitLab Personal Access Token')
+    const fine = findPattern(credentialPatterns, 'GitHub Fine-Grained Token')
+    expect(matches(gitlab.pattern, 'glpat-' + 'a'.repeat(20))).toHaveLength(1)
+    expect(matches(fine.pattern, 'github_pat_' + 'a'.repeat(82))).toHaveLength(1)
+    expect(matches(gitlab.pattern, 'glpat-short')).toHaveLength(0)
+  })
+
+  it('detects Twilio SID and auth tokens', () => {
+    const sid = findPattern(credentialPatterns, 'Twilio Account SID')
+    const auth = findPattern(credentialPatterns, 'Twilio Auth Token')
+    expect(matches(sid.pattern, 'AC' + 'a'.repeat(32))).toHaveLength(1)
+    expect(matches(auth.pattern, `TWILIO_AUTH_TOKEN="${'a'.repeat(32)}"`)).toHaveLength(1)
+    expect(matches(sid.pattern, 'ACshort')).toHaveLength(0)
+  })
+
+  it('detects Cloudflare global keys Azure client secrets and Firebase web keys', () => {
+    const cloudflare = findPattern(credentialPatterns, 'Cloudflare Global API Key')
+    const azure = findPattern(credentialPatterns, 'Azure Client Secret')
+    const firebase = findPattern(credentialPatterns, 'Firebase Web API Key')
+    expect(matches(cloudflare.pattern, `CF_API_KEY="${'a'.repeat(37)}"`)).toHaveLength(1)
+    expect(matches(azure.pattern, `AZURE_CLIENT_SECRET="${'a'.repeat(34)}"`)).toHaveLength(1)
+    expect(matches(firebase.pattern, `FIREBASE_API_KEY="AIzaSy${'a'.repeat(33)}"`)).toHaveLength(1)
+  })
+})
+
+describe('Remaining PII pattern coverage', () => {
+  it('detects international phone numbers', () => {
+    const entry = findPattern(piiPatterns, 'Phone Number (International)')
+    expect(matches(entry.pattern, '+44 20 7946 0958').length).toBeGreaterThan(0)
+    expect(entry.filter!('+44 20 7946 0958')).toBe(true)
+    expect(entry.filter!('+1 555 123 4567')).toBe(false)
+  })
+
+  it('detects public IPv4 addresses and skips private ranges', () => {
+    const { pattern } = findPattern(piiPatterns, 'IPv4 Address')
+    expect(matches(pattern, '8.8.8.8')).toHaveLength(1)
+    expect(matches(pattern, '192.168.1.1')).toHaveLength(0)
+    expect(matches(pattern, '10.0.0.1')).toHaveLength(0)
+    expect(matches(pattern, '127.0.0.1')).toHaveLength(0)
+  })
+})
+
+describe('Full detector coverage', () => {
+  it('has a direct findPattern test for every detector', () => {
+    const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'patterns.test.ts'), 'utf-8')
+    const tested = new Set([...source.matchAll(/findPattern\([^,]+,\s*'([^']+)'\)/g)].map((match) => match[1]))
+    const allNames = [...credentialPatterns, ...piiPatterns].map((pattern) => pattern.name)
+    const missing = allNames.filter((name) => !tested.has(name))
+    expect(missing).toEqual([])
   })
 })
 
