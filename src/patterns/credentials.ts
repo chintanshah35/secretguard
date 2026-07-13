@@ -515,4 +515,59 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /(?:datadog[_\-]?(?:api[_\-]?)?key|DD_API_KEY)["\s=:]+["']?([a-f0-9]{32})["']?/gi,
     mask: (match) => maskSecret(match),
   },
-                        ]
+  {
+    name: 'Notion Integration Token',
+    severity: 'CRITICAL',
+    pattern: /\bntn_[a-zA-Z0-9]{40,}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Linear API Key',
+    severity: 'CRITICAL',
+    pattern: /\blin_api_[a-zA-Z0-9]{40,}\b/g,
+    mask: (match) => match.slice(0, 12) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Postman API Key',
+    severity: 'CRITICAL',
+    pattern: /\bPMAK-[a-f0-9]{24}-[a-f0-9]{34}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Dropbox Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bsl\.[a-zA-Z0-9\-_]{100,}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Mapbox Secret Token',
+    severity: 'CRITICAL',
+    pattern: /\bsk\.[a-zA-Z0-9\-_]{60,}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Algolia API Key',
+    severity: 'HIGH',
+    pattern: /(?:algolia[_\-]?(?:api[_\-]?)?key|ALGOLIA_API_KEY)["\s=:]+["']?([a-f0-9]{32})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'Contentful Access Token',
+    severity: 'CRITICAL',
+    pattern: /(?:contentful[_\-]?(?:access[_\-]?)?token|CONTENTFUL_ACCESS_TOKEN|CTF_CDA_ACCESS_TOKEN)["\s=:]+["']?([a-zA-Z0-9\-_]{40,})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'Heroku API Key',
+    severity: 'CRITICAL',
+    pattern: /(?:heroku[_\-]?(?:api[_\-]?)?key|HEROKU_API_KEY)["\s=:]+["']?([a-f0-9-]{36})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+  {
+    name: 'GCP Service Account Email',
+    severity: 'HIGH',
+    // Marker that usually sits next to a private_key in service account JSON
+    pattern: /"client_email"\s*:\s*"[^"]+@[^"]+\.iam\.gserviceaccount\.com"/g,
+    mask: () => '"client_email": "****@****.iam.gserviceaccount.com"',
+  },
+                                          ]
