@@ -10,29 +10,39 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 
 ## What it detects
 
-46 patterns across credentials and PII, grouped by severity.
+95 patterns across credentials and PII, grouped by severity.
 
 **Credentials — CRITICAL**
-- AWS access keys (`AKIA...`) and secret keys
-- OpenAI API keys (`sk-...`)
+- AWS access keys (`AKIA...`, `ASIA...`) and secret keys
+- OpenAI API keys (`sk-...`, `sk-proj-...`, `sk-svcacct-...`)
 - Anthropic API keys (`sk-ant-...`)
+- Groq (`gsk_...`) and Replicate (`r8_...`) API tokens
 - GitHub tokens (`ghp_`, `ghs_`, `gho_`, `github_pat_`)
-- GitLab personal access tokens (`glpat-`)
-- Slack bot and user tokens (`xoxb-`, `xoxp-`)
-- SendGrid API keys (`SG.`)
+- GitLab tokens (`glpat-`, `glrt-`, `gldt-`, `gloas-`)
+- Slack bot, user, and app tokens (`xoxb-`, `xoxp-`, `xapp-`) plus webhook URLs
+- Discord bot tokens and webhook URLs
+- Telegram bot tokens
+- SendGrid, Mailgun, Mailchimp, Resend, and Postmark keys
 - npm access tokens (`npm_`)
-- Stripe live secret keys (`sk_live_`)
+- Stripe live secret, restricted, and webhook keys (`sk_live_`, `rk_live_`, `whsec_`)
+- Shopify tokens (`shpat_`, `shpss_`, `shpca_`, `shppa_`)
+- Square access tokens (`sq0atp-`, `sq0csp-`)
 - Twilio auth tokens
 - HuggingFace access tokens (`hf_...`)
-- Vercel access tokens
+- Vercel, Netlify (`nf_`), and DigitalOcean (`dop_v1_`, `doo_v1_`) tokens
+- PlanetScale (`pscale_tkn_`), Terraform Cloud (`at.`), Pulumi (`pul-`), Vault (`hvs.`/`hvb.`)
 - Supabase service role keys (long JWT)
 - Cloudflare API tokens and global API keys
 - Azure storage connection strings and client secrets
 - Firebase service account key markers
+- Sentry auth tokens (`sntrys_`)
+- New Relic (`NRAK-`, `NRAL`) and Datadog API keys
+- Notion (`ntn_`), Linear (`lin_api_`), Postman (`PMAK-`), Dropbox (`sl.`), Mapbox (`sk.`)
+- Algolia, Contentful, and Heroku API keys
 - PyPI API tokens (`pypi-...`)
 - Doppler service and personal tokens (`dp.st.`, `dp.pt.`)
-- Database URLs (PostgreSQL, MySQL, MongoDB — credentials in URL)
-- RSA, EC, OpenSSH, and PGP private keys
+- Database URLs (PostgreSQL, MySQL, MongoDB, Redis, AMQP — credentials in URL)
+- RSA, EC, DSA, PKCS8, OpenSSH, and PGP private keys
 
 **Credentials — HIGH**
 - JWT tokens
@@ -40,6 +50,8 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 - Google API keys (`AIzaSy...`)
 - Firebase web API keys
 - Twilio Account SIDs
+- GCP service account email markers
+- Sentry DSNs
 - Generic API keys (high-entropy strings assigned to `api_key`, `API_KEY`, etc.)
 
 **PII — CRITICAL**
