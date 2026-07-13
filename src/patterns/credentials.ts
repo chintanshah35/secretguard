@@ -442,4 +442,77 @@ export const credentialPatterns: PatternMatch[] = [
     pattern: /\bdp\.pt\.[A-Za-z0-9]{40,}\b/g,
     mask: (match) => match.slice(0, 9) + '****' + match.slice(-4),
   },
-]
+  {
+    name: 'DigitalOcean Personal Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bdop_v1_[a-f0-9]{64}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'DigitalOcean OAuth Token',
+    severity: 'CRITICAL',
+    pattern: /\bdoo_v1_[a-f0-9]{64}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Netlify Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bnf_[a-zA-Z0-9]{40,}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+  {
+    name: 'PlanetScale Token',
+    severity: 'CRITICAL',
+    pattern: /\bpscale_tkn_[a-zA-Z0-9_\-]{40,}\b/g,
+    mask: (match) => match.slice(0, 14) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Terraform Cloud Token',
+    severity: 'CRITICAL',
+    // Tokens are "at." followed by a long base64-ish payload
+    pattern: /\bat\.[a-zA-Z0-9\-_]{50,}\b/g,
+    mask: (match) => match.slice(0, 6) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Pulumi Access Token',
+    severity: 'CRITICAL',
+    pattern: /\bpul-[a-f0-9]{40}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'HashiCorp Vault Token',
+    severity: 'CRITICAL',
+    pattern: /\bhv[sb]\.[a-zA-Z0-9_-]{24,}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Sentry Auth Token',
+    severity: 'CRITICAL',
+    pattern: /\bsntrys_[a-zA-Z0-9_\-]{60,}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+  {
+    name: 'Sentry DSN',
+    severity: 'HIGH',
+    pattern: /https:\/\/[a-f0-9]+@[a-z0-9.-]+\.ingest\.[a-z0-9.-]*sentry\.io\/\d+/gi,
+    mask: () => 'https://****@****.ingest.sentry.io/****',
+  },
+  {
+    name: 'New Relic User API Key',
+    severity: 'CRITICAL',
+    pattern: /\bNRAK-[A-Z0-9]{27}\b/g,
+    mask: (match) => match.slice(0, 8) + '****' + match.slice(-4),
+  },
+  {
+    name: 'New Relic License Key',
+    severity: 'CRITICAL',
+    pattern: /\b[a-f0-9]{32}NRAL\b/g,
+    mask: (match) => match.slice(0, 8) + '****NRAL',
+  },
+  {
+    name: 'Datadog API Key',
+    severity: 'CRITICAL',
+    pattern: /(?:datadog[_\-]?(?:api[_\-]?)?key|DD_API_KEY)["\s=:]+["']?([a-f0-9]{32})["']?/gi,
+    mask: (match) => maskSecret(match),
+  },
+                        ]
