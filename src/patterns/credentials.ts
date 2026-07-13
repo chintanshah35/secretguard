@@ -274,6 +274,18 @@ export const credentialPatterns: PatternMatch[] = [
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
   {
+    name: 'Database URL (Redis)',
+    severity: 'CRITICAL',
+    pattern: /rediss?:\/\/[^:\s]+:[^@\s]+@[^\s"']+/gi,
+    mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
+  },
+  {
+    name: 'AMQP URL',
+    severity: 'CRITICAL',
+    pattern: /amqps?:\/\/[^:\s]+:[^@\s]+@[^\s"']+/gi,
+    mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
+  },
+      {
     name: 'RSA Private Key',
     severity: 'CRITICAL',
     pattern: /-----BEGIN RSA PRIVATE KEY-----[\s\S]+?-----END RSA PRIVATE KEY-----/g,
@@ -298,12 +310,42 @@ export const credentialPatterns: PatternMatch[] = [
     mask: () => '-----BEGIN PGP PRIVATE KEY BLOCK----- [redacted] -----END PGP PRIVATE KEY BLOCK-----',
   },
   {
+    name: 'PKCS8 Private Key',
+    severity: 'CRITICAL',
+    pattern: /-----BEGIN PRIVATE KEY-----[\s\S]+?-----END PRIVATE KEY-----/g,
+    mask: () => '-----BEGIN PRIVATE KEY----- [redacted] -----END PRIVATE KEY-----',
+  },
+  {
+    name: 'DSA Private Key',
+    severity: 'CRITICAL',
+    pattern: /-----BEGIN DSA PRIVATE KEY-----[\s\S]+?-----END DSA PRIVATE KEY-----/g,
+    mask: () => '-----BEGIN DSA PRIVATE KEY----- [redacted] -----END DSA PRIVATE KEY-----',
+  },
+      {
     name: 'GitLab Personal Access Token',
     severity: 'CRITICAL',
     pattern: /\bglpat-[a-zA-Z0-9_\-]{20}\b/g,
     mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
   },
   {
+    name: 'GitLab Runner Token',
+    severity: 'CRITICAL',
+    pattern: /\bglrt-[a-zA-Z0-9_\-]{20,}\b/g,
+    mask: (match) => match.slice(0, 9) + '****' + match.slice(-4),
+  },
+  {
+    name: 'GitLab Deploy Token',
+    severity: 'CRITICAL',
+    pattern: /\bgldt-[a-zA-Z0-9_\-]{20,}\b/g,
+    mask: (match) => match.slice(0, 9) + '****' + match.slice(-4),
+  },
+  {
+    name: 'GitLab OAuth App Secret',
+    severity: 'CRITICAL',
+    pattern: /\bgloas-[a-zA-Z0-9_\-]{20,}\b/g,
+    mask: (match) => match.slice(0, 10) + '****' + match.slice(-4),
+  },
+        {
     name: 'GitHub Fine-Grained Token',
     severity: 'CRITICAL',
     pattern: /\bgithub_pat_[a-zA-Z0-9_]{82}\b/g,
