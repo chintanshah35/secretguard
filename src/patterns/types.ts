@@ -11,6 +11,18 @@ export type PatternMatch = {
   skipFiles?: RegExp
 }
 
+export type VerificationStatus = 'confirmed' | 'invalid' | 'error' | 'unsupported' | 'skipped'
+
+export type Verification = {
+  status: VerificationStatus
+  detail: string
+}
+
+export type FindingRemediation = {
+  revokeUrl: string
+  steps: string[]
+}
+
 export type Finding = {
   file: string
   line: number
@@ -19,6 +31,8 @@ export type Finding = {
   severity: Severity
   masked: string
   raw: string
+  remediation?: FindingRemediation
+  verification?: Verification
 }
 
 export type ScanResult = {
