@@ -19,6 +19,8 @@ export function printJson(result: ScanResult): void {
       pattern: finding.pattern,
       severity: finding.severity,
       masked: finding.masked,
+      verification: finding.verification,
+      remediation: finding.remediation,
     })),
   }
 

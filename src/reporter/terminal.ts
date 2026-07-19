@@ -1,5 +1,6 @@
 import type { ScanResult, Finding, Severity } from '../patterns/types.js'
 import type { HistoryScanResult, HistoryFinding } from '../scanner/history.js'
+import { getRemediation } from '../remediation.js'
 
 const colors = {
   reset: '\x1b[0m',
@@ -18,6 +19,28 @@ const severityColor: Record<Severity, string> = {
   LOW: colors.gray,
 }
 
+function formatVerification(finding: Finding): string[] {
+  if (!finding.verification) return []
+  const status = finding.verification.status
+  const statusColor =
+    status === 'confirmed' ? colors.red : status === 'invalid' ? colors.green : colors.gray
+  return [
+    `  verify ${statusColor}${status}${colors.reset} ${colors.gray}${finding.verification.detail}${colors.reset}`,
+  ]
+}
+
+function formatRemediation(finding: Finding): string[] {
+  const remediation = finding.remediation ?? getRemediation(finding.pattern)
+  if (!remediation) return []
+  const lines = [
+    `  revoke ${colors.blue}${remediation.revokeUrl}${colors.reset}`,
+  ]
+  for (const step of remediation.steps) {
+    lines.push(`  next ${colors.gray}${step}${colors.reset}`)
+  }
+  return lines
+}
+
 function formatFinding(finding: Finding): string {
   const color = severityColor[finding.severity]
   const location = `${colors.gray}${finding.file}:${finding.line}:${finding.column}${colors.reset}`
@@ -30,6 +53,8 @@ function formatFinding(finding: Finding): string {
     `  ${label} ${name}`,
     `  at ${location}`,
     `  value ${value}`,
+    ...formatVerification(finding),
+    ...formatRemediation(finding),
     '',
   ].join('\n')
 }
@@ -76,6 +101,7 @@ function formatHistoryFinding(finding: HistoryFinding): string {
   const value = `${colors.gray}${finding.masked}${colors.reset}`
   const commit = `${colors.gray}${finding.commitShort} ${finding.commitDate.slice(0, 10)} — ${finding.commitMessage}${colors.reset}`
   const author = `${colors.gray}by ${finding.commitAuthor}${colors.reset}`
+  const asFinding = finding as Finding
 
   return [
     `  ${label} ${name}`,
@@ -83,6 +109,8 @@ function formatHistoryFinding(finding: HistoryFinding): string {
     `  commit ${commit}`,
     `  ${author}`,
     `  value ${value}`,
+    ...formatVerification(asFinding),
+    ...formatRemediation(asFinding),
     '',
   ].join('\n')
 }
