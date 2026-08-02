@@ -8,10 +8,13 @@ import { scanStaged } from '../scanner/staged.js'
 import { loadIgnoreFile } from '../scanner/ignorefile.js'
 import { installHook } from '../install-hook.js'
 import { loadBaseline, filterBaseline, writeBaseline } from '../baseline.js'
+import { withRemediation } from '../enrich.js'
+import { verifyFindings } from '../verify.js'
 import { printReport, printHistoryReport } from '../reporter/terminal.js'
 import { printJson, printHistoryJson } from '../reporter/json.js'
 import { generateHtml } from '../reporter/html.js'
 import { generateSarif } from '../reporter/sarif.js'
+import type { Finding, ScanResult } from '../patterns/types.js'
 
 const args = parseArgs(process.argv)
 
@@ -28,6 +31,7 @@ Options:
   --json                    Output results as JSON
   --history                 Scan full git commit history
   --staged                  Scan only staged (pre-commit) changes
+  --verify                  Live-check OpenAI, Anthropic, GitHub, Stripe, AWS keys
   --sarif <file>            Save SARIF report (for GitHub Code Scanning)
   --baseline <file>         Ignore findings present in baseline file
   --update-baseline <file>  Write current findings as new baseline
@@ -40,6 +44,7 @@ Examples:
   secretguard . --json
   secretguard . --history
   secretguard . --staged
+  secretguard . --verify
   secretguard install-hook
   secretguard . --sarif results.sarif
   secretguard . --baseline .secretguard-baseline.json
@@ -59,7 +64,19 @@ if (args.installHook) {
   process.exit(0)
 }
 
+async function finalizeFindings(findings: Finding[]) {
+  let next = withRemediation(findings)
+  if (args.verify) {
+    next = await verifyFindings(next)
+  }
+  return next
+}
+
 if (args.history) {
+  if (args.verify) {
+    console.error('secretguard: --verify is not supported with --history yet (raw values are not kept)')
+  }
+
   const result = await scanHistory(args.target)
 
   if (args.json) {
@@ -68,18 +85,20 @@ if (args.history) {
     printHistoryReport(result)
   }
 
-  const hasCritical = result.findings.some((f) => f.severity === 'CRITICAL')
+  const hasCritical = result.findings.some((finding) => finding.severity === 'CRITICAL')
   process.exit(hasCritical ? 1 : 0)
 } else if (args.staged) {
   const result = await scanStaged(args.target)
+  const findings = await finalizeFindings(result.findings)
+  const enriched: ScanResult = { ...result, findings }
 
   if (args.json) {
-    printJson(result)
+    printJson(enriched)
   } else {
-    printReport(result)
+    printReport(enriched)
   }
 
-  const hasCritical = result.findings.some((f) => f.severity === 'CRITICAL')
+  const hasCritical = findings.some((finding) => finding.severity === 'CRITICAL')
   process.exit(hasCritical ? 1 : 0)
 } else {
   const fileIgnore = await loadIgnoreFile(args.target)
@@ -97,6 +116,7 @@ if (args.history) {
     console.log(`Baseline written to ${args.baseline}`)
   }
 
+  findings = await finalizeFindings(findings)
   const result = { ...rawResult, findings }
 
   if (args.output) {
@@ -117,6 +137,6 @@ if (args.history) {
     printReport(result)
   }
 
-  const hasCritical = result.findings.some((f) => f.severity === 'CRITICAL')
+  const hasCritical = findings.some((finding) => finding.severity === 'CRITICAL')
   process.exit(hasCritical ? 1 : 0)
 }
