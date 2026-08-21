@@ -118,6 +118,9 @@ secretguard . --history --json
 # Scan only staged changes (useful in pre-commit hooks)
 secretguard . --staged
 
+# Live-check high-value provider keys
+secretguard . --verify
+
 # Install a git pre-commit hook
 secretguard install-hook
 
@@ -187,6 +190,26 @@ secretguard . --history --json
 ```
 
 Scans every added line across every commit, deduplicates identical findings (same file + pattern + value across multiple commits), and reports with commit hash, author, date, and message.
+
+## Live verification
+
+```bash
+secretguard . --verify
+```
+
+When `--verify` is set, secretguard calls provider APIs for a small set of high-value secrets:
+
+- OpenAI (`sk-`, `sk-proj-`, `sk-svcacct-`)
+- Anthropic (`sk-ant-`)
+- GitHub (`ghp_`, `github_pat_`, and related tokens)
+- Stripe live secret / restricted keys
+- AWS access keys (needs a matching AWS secret key in the same scan)
+
+Findings are marked `confirmed`, `invalid`, `skipped`, `unsupported`, or `error`. Verification is opt-in, needs network access, and is skipped for `--history` scans.
+
+## Remediation hints
+
+Every finding includes a revoke URL and short next steps in terminal and JSON output so you can rotate the secret without hunting through provider docs.
 
 ## Baseline
 
