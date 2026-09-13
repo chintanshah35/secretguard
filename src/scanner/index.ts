@@ -1,6 +1,7 @@
 import { walkFiles } from './walker.js'
 import { matchFile } from './matcher.js'
 import { allPatterns } from '../patterns/index.js'
+import { withoutRaw } from '../sanitize.js'
 import type { ScanResult, ScanOptions } from '../patterns/types.js'
 
 export async function scan(targetPath: string, options: ScanOptions = {}): Promise<ScanResult> {
@@ -17,7 +18,7 @@ export async function scan(targetPath: string, options: ScanOptions = {}): Promi
 
   return {
     scanned,
-    findings,
+    findings: options.includeRaw ? findings : withoutRaw(findings),
     duration: Date.now() - start,
   }
 }

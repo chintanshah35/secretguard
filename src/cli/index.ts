@@ -10,11 +10,17 @@ import { installHook } from '../install-hook.js'
 import { loadBaseline, filterBaseline, writeBaseline } from '../baseline.js'
 import { withRemediation } from '../enrich.js'
 import { verifyFindings } from '../verify.js'
+import { withoutRaw } from '../sanitize.js'
 import { printReport, printHistoryReport } from '../reporter/terminal.js'
 import { printJson, printHistoryJson } from '../reporter/json.js'
 import { generateHtml } from '../reporter/html.js'
 import { generateSarif } from '../reporter/sarif.js'
 import type { Finding, ScanResult } from '../patterns/types.js'
+
+const VERIFY_WARNING = `WARNING: --verify sends detected credential values to provider APIs
+(OpenAI, Anthropic, GitHub, Stripe, AWS STS) to check whether they are active.
+Source files are not uploaded. Do not use --verify if this violates your
+organization's security policy.`
 
 const args = parseArgs(process.argv)
 
@@ -31,7 +37,7 @@ Options:
   --json                    Output results as JSON
   --history                 Scan full git commit history
   --staged                  Scan only staged (pre-commit) changes
-  --verify                  Live-check OpenAI, Anthropic, GitHub, Stripe, AWS keys
+  --verify                  Live-check keys (sends candidate secrets to providers)
   --sarif <file>            Save SARIF report (for GitHub Code Scanning)
   --baseline <file>         Ignore findings present in baseline file
   --update-baseline <file>  Write current findings as new baseline
@@ -67,9 +73,12 @@ if (args.installHook) {
 async function finalizeFindings(findings: Finding[]) {
   let next = withRemediation(findings)
   if (args.verify) {
+    console.error(VERIFY_WARNING)
+    console.error('')
     next = await verifyFindings(next)
   }
-  return next
+  // Drop raw values before any reporter output
+  return withoutRaw(next)
 }
 
 if (args.history) {
@@ -88,7 +97,8 @@ if (args.history) {
   const hasCritical = result.findings.some((finding) => finding.severity === 'CRITICAL')
   process.exit(hasCritical ? 1 : 0)
 } else if (args.staged) {
-  const result = await scanStaged(args.target)
+  // Keep raw until after optional --verify, then strip in finalizeFindings
+  const result = await scanStaged(args.target, { includeRaw: true })
   const findings = await finalizeFindings(result.findings)
   const enriched: ScanResult = { ...result, findings }
 
@@ -102,7 +112,10 @@ if (args.history) {
   process.exit(hasCritical ? 1 : 0)
 } else {
   const fileIgnore = await loadIgnoreFile(args.target)
-  const rawResult = await scan(args.target, { ignore: [...args.ignore, ...fileIgnore] })
+  const rawResult = await scan(args.target, {
+    ignore: [...args.ignore, ...fileIgnore],
+    includeRaw: true,
+  })
 
   let findings = rawResult.findings
 
@@ -112,7 +125,7 @@ if (args.history) {
   }
 
   if (args.updateBaseline && args.baseline) {
-    await writeBaseline(args.baseline, rawResult.findings)
+    await writeBaseline(args.baseline, withoutRaw(rawResult.findings))
     console.log(`Baseline written to ${args.baseline}`)
   }
 

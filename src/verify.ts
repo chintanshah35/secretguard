@@ -313,22 +313,30 @@ async function verifyOne(
     }
   }
 
+  const token = finding.raw
+  if (!token) {
+    return {
+      status: 'skipped',
+      detail: 'Raw credential value is not available for verification',
+    }
+  }
+
   if (finding.pattern.startsWith('OpenAI')) {
-    return verifyOpenAI(finding.raw, fetchImpl, timeoutMs)
+    return verifyOpenAI(token, fetchImpl, timeoutMs)
   }
   if (finding.pattern === 'Anthropic API Key') {
-    return verifyAnthropic(finding.raw, fetchImpl, timeoutMs)
+    return verifyAnthropic(token, fetchImpl, timeoutMs)
   }
   if (finding.pattern.startsWith('GitHub')) {
-    return verifyGitHub(finding.raw, fetchImpl, timeoutMs)
+    return verifyGitHub(token, fetchImpl, timeoutMs)
   }
   if (finding.pattern.startsWith('Stripe')) {
-    return verifyStripe(finding.raw, fetchImpl, timeoutMs)
+    return verifyStripe(token, fetchImpl, timeoutMs)
   }
   if (finding.pattern === 'AWS Access Key' || finding.pattern === 'AWS Temporary Access Key') {
     return verifyAwsAccessKey(
-      finding.raw,
-      secretByAccessKey.get(finding.raw),
+      token,
+      secretByAccessKey.get(token),
       fetchImpl,
       timeoutMs,
     )
@@ -339,8 +347,8 @@ async function verifyOne(
 
 function collectAwsSecrets(findings: Finding[]) {
   const secrets = findings
-    .filter((finding) => finding.pattern === 'AWS Secret Key')
-    .map((finding) => finding.raw)
+    .filter((finding) => finding.pattern === 'AWS Secret Key' && finding.raw)
+    .map((finding) => finding.raw!)
 
   // Pairing is best-effort: if exactly one secret is present, use it for all access keys.
   // Otherwise leave pairing empty and AWS checks will be skipped.
@@ -348,7 +356,10 @@ function collectAwsSecrets(findings: Finding[]) {
   if (secrets.length === 1) {
     const onlySecret = secrets[0]!
     for (const finding of findings) {
-      if (finding.pattern === 'AWS Access Key' || finding.pattern === 'AWS Temporary Access Key') {
+      if (
+        (finding.pattern === 'AWS Access Key' || finding.pattern === 'AWS Temporary Access Key') &&
+        finding.raw
+      ) {
         secretByAccessKey.set(finding.raw, onlySecret)
       }
     }

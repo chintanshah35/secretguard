@@ -1,7 +1,8 @@
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { allPatterns } from '../patterns/index.js'
-import type { PatternMatch, Severity, Finding, ScanResult } from '../patterns/types.js'
+import { withoutRaw } from '../sanitize.js'
+import type { PatternMatch, Severity, Finding, ScanResult, ScanOptions } from '../patterns/types.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -68,7 +69,7 @@ function scanStagedDiff(diff: string, patterns: PatternMatch[]): Finding[] {
 
 export async function scanStaged(
   targetPath: string,
-  options: { patterns?: PatternMatch[] } = {},
+  options: Pick<ScanOptions, 'patterns' | 'includeRaw'> = {},
 ): Promise<ScanResult> {
   const patterns = options.patterns ?? allPatterns
   const start = Date.now()
@@ -80,7 +81,7 @@ export async function scanStaged(
 
   return {
     scanned: files,
-    findings,
+    findings: options.includeRaw ? findings : withoutRaw(findings),
     duration: Date.now() - start,
   }
 }
