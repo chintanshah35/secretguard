@@ -30,7 +30,8 @@ export type Finding = {
   pattern: string
   severity: Severity
   masked: string
-  raw: string
+  /** Present only when scan/includeRaw is enabled. Prefer masked in logs. */
+  raw?: string
   remediation?: FindingRemediation
   verification?: Verification
 }
@@ -44,4 +45,6 @@ export type ScanResult = {
 export type ScanOptions = {
   ignore?: string[]
   patterns?: PatternMatch[]
+  /** Include raw secret values on findings. Default false to avoid accidental leaks. */
+  includeRaw?: boolean
 }
