@@ -1,0 +1,44 @@
+name: secretguard
+description: Scan repository source for secrets, credentials, and PII
+author: Chintan Shah
+
+branding:
+  icon: shield
+  color: gray-dark
+
+inputs:
+  path:
+    description: Path to scan
+    required: false
+    default: '.'
+  args:
+    description: Extra CLI arguments (for example --ignore tests --sarif results.sarif)
+    required: false
+    default: ''
+  verify:
+    description: Set to true to live-check supported provider keys (sends candidate secrets to APIs)
+    required: false
+    default: 'false'
+  version:
+    description: secretguard npm version or tag to run via npx
+    required: false
+    default: '1'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run secretguard
+      shell: bash
+      run: |
+        set -euo pipefail
+        extra_args="${{ inputs.args }}"
+        if [ "${{ inputs.verify }}" = "true" ]; then
+          extra_args="--verify ${extra_args}"
+        fi
+        # shellcheck disable=SC2086
+        npx --yes "secretguard@${{ inputs.version }}" "${{ inputs.path }}" $extra_args
