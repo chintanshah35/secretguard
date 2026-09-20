@@ -10,7 +10,7 @@ Exits with code `1` if any CRITICAL findings are detected — drop it into your 
 
 ## What it detects
 
-95 patterns across credentials and PII, grouped by severity.
+95 built-in detection patterns covering cloud credentials, AI API keys, SaaS tokens, database credentials, private keys, and sensitive PII, grouped by severity.
 
 **Credentials — CRITICAL**
 - AWS access keys (`AKIA...`, `ASIA...`) and secret keys
@@ -118,7 +118,7 @@ secretguard . --history --json
 # Scan only staged changes (useful in pre-commit hooks)
 secretguard . --staged
 
-# Live-check high-value provider keys
+# Live-check high-value provider keys (sends candidate secrets to provider APIs)
 secretguard . --verify
 
 # Install a git pre-commit hook
@@ -133,6 +133,16 @@ secretguard . --baseline .secretguard-baseline.json
 # Update the baseline to current findings
 secretguard . --baseline .secretguard-baseline.json --update-baseline
 ```
+
+## Network behavior
+
+| Mode | Network | Data sent |
+|---|---|---|
+| Default scan | None | Nothing |
+| `--staged` / `--history` | None | Nothing |
+| `--verify` | Provider APIs only | Candidate credential values for supported providers |
+
+`--verify` may contact OpenAI, Anthropic, GitHub, Stripe, and AWS STS. It does **not** upload source files. Do not use `--verify` if that violates your security policy. The CLI prints a warning when `--verify` is enabled.
 
 ## Defaults
 
@@ -155,6 +165,45 @@ src/mocks/
 ```
 
 ## CI/CD
+
+### GitHub Action (recommended)
+
+```yaml
+# .github/workflows/secretguard.yml
+name: Secret scan
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  secretguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for secrets
+        uses: chintanshah35/secretguard@v1.3.0
+        with:
+          path: .
+          args: --sarif results.sarif
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+```
+
+Optional live verification (sends candidate secrets to provider APIs):
+
+```yaml
+- uses: chintanshah35/secretguard@v1.3.0
+  with:
+    path: .
+    verify: 'true'
+```
+
+### One-liner with npx
 
 ```yaml
 # GitHub Actions
@@ -182,14 +231,14 @@ The exit code is `0` when no CRITICAL findings are detected, `1` otherwise.
 ## Git history scanning
 
 ```bash
-# Scan all commits in the repo for leaked secrets
+# Scan secrets introduced in git commit history (added lines)
 secretguard . --history
 
 # Get JSON output (useful for piping)
 secretguard . --history --json
 ```
 
-Scans every added line across every commit, deduplicates identical findings (same file + pattern + value across multiple commits), and reports with commit hash, author, date, and message.
+Scans added lines across commits, deduplicates identical findings (same file + pattern + value across multiple commits), and reports with commit hash, author, date, and message. This is not a full forensic history rewrite analysis.
 
 ## Live verification
 
@@ -205,7 +254,7 @@ When `--verify` is set, secretguard calls provider APIs for a small set of high-
 - Stripe live secret / restricted keys
 - AWS access keys (needs a matching AWS secret key in the same scan)
 
-Findings are marked `confirmed`, `invalid`, `skipped`, `unsupported`, or `error`. Verification is opt-in, needs network access, and is skipped for `--history` scans.
+Findings are marked `confirmed`, `invalid`, `skipped`, `unsupported`, or `error`. Verification is opt-in, needs network access, sends candidate credential values to provider APIs, and is skipped for `--history` scans. See [Network behavior](#network-behavior) and [SECURITY.md](./SECURITY.md).
 
 ## Remediation hints
 
@@ -241,7 +290,7 @@ Commit `.secretguard-baseline.json` to your repo so the team shares the same sup
 import { scan, piiPatterns, credentialPatterns } from 'secretguard'
 import type { ScanResult, Finding } from 'secretguard'
 
-// Scan with defaults
+// Scan with defaults (Finding.raw is omitted)
 const result = await scan('./src')
 
 // Scan with options
@@ -250,10 +299,15 @@ const result = await scan('./src', {
   patterns: [...credentialPatterns],  // credentials only, skip PII
 })
 
-console.log(result.findings)  // Finding[]
+// Opt in to raw values only when you need them for custom tooling
+const withRaw = await scan('./src', { includeRaw: true })
+
+console.log(result.findings)  // Finding[] (masked only by default)
 console.log(result.scanned)   // number of files scanned
 console.log(result.duration)  // ms
 ```
+
+Prefer `masked` in logs. See [SECURITY.md](./SECURITY.md).
 
 ## Requirements
 
@@ -262,7 +316,10 @@ Node.js 18 or later.
 ## Articles
 
 - **[How to Scan for Hardcoded Secrets in a Node.js Project (GitHub Actions Guide)](https://dev.to/chintanshah35/how-to-scan-for-hardcoded-secrets-in-a-nodejs-project-github-actions-guide)** - Dev.to
+- **[TruffleHog vs Gitleaks vs GitHub Secret Scanning (2026)](https://dev.to/chintanshah35/trufflehog-vs-gitleaks-vs-github-secret-scanning-why-most-ci-scanners-fail-2026)** - Dev.to
 
 ## License
 
 MIT
+
+See [SECURITY.md](./SECURITY.md) for vulnerability reporting and network behavior.
