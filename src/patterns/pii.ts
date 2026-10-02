@@ -54,6 +54,21 @@ const SSN_LABEL = /\bssn\b|social[\s_-]?security|\bss#/i
 const isLikelySsn = (match: string, line = ''): boolean =>
   /^\d{3}-\d{2}-\d{4}$/.test(match) || SSN_LABEL.test(line)
 
+// Order numbers and snowflake IDs share card prefixes; real cards pass Luhn
+const passesLuhn = (match: string): boolean => {
+  const digits = match.replace(/\D/g, '')
+  let sum = 0
+  for (let index = 0; index < digits.length; index++) {
+    let digit = Number(digits[digits.length - 1 - index])
+    if (index % 2 === 1) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+  }
+  return sum % 10 === 0
+}
+
 export const piiPatterns: PatternMatch[] = [
   {
     name: 'Email Address',
@@ -98,8 +113,9 @@ export const piiPatterns: PatternMatch[] = [
     name: 'Credit Card',
     severity: 'CRITICAL',
     // Visa, Mastercard, Amex, Discover
-    pattern: /\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6011)[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g,
+    pattern: /(?<![\d.])\b(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6011)[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g,
     skipFiles: TEST_FILES,
+    filter: passesLuhn,
     mask: (match) => {
       const digits = match.replace(/\D/g, '')
       return '**** **** **** ' + digits.slice(-4)
