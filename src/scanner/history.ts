@@ -98,7 +98,7 @@ function scanDiff(
         pattern.pattern.lastIndex = 0
         let match: RegExpExecArray | null
         while ((match = pattern.pattern.exec(content)) !== null) {
-          if (pattern.filter && !pattern.filter(match[0])) continue
+          if (pattern.filter && !pattern.filter(match[0], content)) continue
           findings.push({
             commitHash: meta.hash,
             commitShort: meta.short,

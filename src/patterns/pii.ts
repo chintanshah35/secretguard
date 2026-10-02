@@ -47,6 +47,13 @@ const isRealPhone = (phone: string): boolean => {
   return true
 }
 
+const SSN_LABEL = /\bssn\b|social[\s_-]?security|\bss#/i
+
+// Bare 9-digit numbers are everywhere (IDs, constants, timestamps), so only
+// the dashed form counts on its own
+const isLikelySsn = (match: string, line = ''): boolean =>
+  /^\d{3}-\d{2}-\d{4}$/.test(match) || SSN_LABEL.test(line)
+
 export const piiPatterns: PatternMatch[] = [
   {
     name: 'Email Address',
@@ -81,9 +88,10 @@ export const piiPatterns: PatternMatch[] = [
   {
     name: 'SSN',
     severity: 'CRITICAL',
-    // Matches 123-45-6789 and 123456789 but avoids phone number collisions
-    pattern: /\b(?!000|666|9\d{2})\d{3}[-\s]?(?!00)\d{2}[-\s]?(?!0000)\d{4}\b/g,
+    // Lookbehind stops matches inside decimals like 0.356563782
+    pattern: /(?<![\d.])\b(?!000|666|9\d{2})\d{3}[-\s]?(?!00)\d{2}[-\s]?(?!0000)\d{4}\b/g,
     skipFiles: TEST_FILES,
+    filter: isLikelySsn,
     mask: (match) => '***-**-' + match.replace(/\D/g, '').slice(-4),
   },
   {

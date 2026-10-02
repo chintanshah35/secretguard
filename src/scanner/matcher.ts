@@ -33,7 +33,7 @@ export async function matchFile(
 
       let match: RegExpExecArray | null
       while ((match = pattern.pattern.exec(line)) !== null) {
-        if (pattern.filter && !pattern.filter(match[0])) continue
+        if (pattern.filter && !pattern.filter(match[0], line)) continue
         findings.push({
           file: filePath,
           line: lineIndex + 1,

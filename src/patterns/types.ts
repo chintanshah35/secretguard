@@ -5,8 +5,8 @@ export type PatternMatch = {
   severity: Severity
   pattern: RegExp
   mask: (match: string) => string
-  /** Return false to skip this match — use to reduce false positives */
-  filter?: (match: string) => boolean
+  /** Return false to skip this match — use to reduce false positives. `line` is the full source line. */
+  filter?: (match: string, line: string) => boolean
   /** Skip this pattern entirely for files whose path matches — e.g. test files */
   skipFiles?: RegExp
 }
