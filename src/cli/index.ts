@@ -56,7 +56,7 @@ Options:
   --verify                  Live-check keys (sends candidate secrets to providers)
   --sarif <file>            Save SARIF report (for GitHub Code Scanning)
   --baseline <file>         Ignore findings present in baseline file
-  --update-baseline <file>  Write current findings as new baseline
+  --update-baseline         Write current findings to the --baseline file
   --output, -o <file>       Save HTML report to file
   --help, -h                Show this help message
 

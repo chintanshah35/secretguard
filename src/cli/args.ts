@@ -40,6 +40,12 @@ export function parseArgs(argv: string[]): CliArgs {
     help: false,
   }
 
+  const valueFor = (flag: string, index: number) => {
+    const value = args[index]
+    if (value === undefined || value.startsWith('-')) throw new Error(`${flag} needs a value`)
+    return value
+  }
+
   for (let index = 0; index < args.length; index++) {
     const arg = args[index]!
     if (arg === '--help' || arg === '-h') {
@@ -55,9 +61,9 @@ export function parseArgs(argv: string[]): CliArgs {
     } else if (arg === 'install-hook') {
       result.installHook = true
     } else if (arg === '--sarif') {
-      result.sarif = args[++index] ?? null
+      result.sarif = valueFor(arg, ++index)
     } else if (arg === '--baseline') {
-      result.baseline = args[++index] ?? null
+      result.baseline = valueFor(arg, ++index)
     } else if (arg === '--no-gitignore') {
       result.gitignore = false
     } else if (arg === '--no-pii') {
@@ -71,11 +77,12 @@ export function parseArgs(argv: string[]): CliArgs {
     } else if (arg === '--update-baseline') {
       result.updateBaseline = true
     } else if (arg === '--ignore' || arg === '-i') {
-      const value = args[++index]
-      if (value) result.ignore.push(value)
+      result.ignore.push(valueFor(arg, ++index))
     } else if (arg === '--output' || arg === '-o') {
-      result.output = args[++index] ?? null
-    } else if (!arg.startsWith('-')) {
+      result.output = valueFor(arg, ++index)
+    } else if (arg.startsWith('-')) {
+      throw new Error(`unknown option "${arg}"`)
+    } else {
       result.target = arg
     }
   }
