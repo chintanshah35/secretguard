@@ -1,7 +1,9 @@
 import type { PatternMatch } from './types.js'
 
-// PII patterns are suppressed in test/fixture/mock files where synthetic data is expected
-const TEST_FILES = /(?:\.test\.|\.spec\.|__tests__[\\/]|__mocks__[\\/]|[\\/]fixtures[\\/]|[\\/]mocks[\\/]|[\\/]stubs[\\/])/
+// PII patterns are suppressed in test/fixture/mock files where synthetic data is expected,
+// and in lockfiles, which list package maintainer emails. Credentials still run on lockfiles
+// because private registry URLs can carry tokens.
+const TEST_FILES = /(?:\.test\.|\.spec\.|__tests__[\\/]|__mocks__[\\/]|[\\/]fixtures[\\/]|[\\/]mocks[\\/]|[\\/]stubs[\\/]|(?:^|[\\/])(?:package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lock|composer\.lock|Gemfile\.lock|poetry\.lock|Cargo\.lock)$)/
 
 const maskMiddle = (value: string): string => {
   if (value.length <= 6) return '*'.repeat(value.length)

@@ -20,5 +20,5 @@ export const BINARY_EXTENSIONS = new Set([
   '.woff', '.woff2', '.ttf', '.eot',
   '.mp4', '.mp3', '.wav', '.avi',
   '.db', '.sqlite', '.sqlite3',
-  '.lock',
+  '.lockb',
 ])

@@ -95,6 +95,7 @@ function scanDiff(
       const content = line.slice(1)
 
       for (const pattern of patterns) {
+        if (pattern.skipFiles?.test(currentFile)) continue
         pattern.pattern.lastIndex = 0
         let match: RegExpExecArray | null
         while ((match = pattern.pattern.exec(content)) !== null) {
