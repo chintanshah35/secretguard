@@ -15,14 +15,27 @@ import { printReport, printHistoryReport } from '../reporter/terminal.js'
 import { printJson, printHistoryJson } from '../reporter/json.js'
 import { generateHtml } from '../reporter/html.js'
 import { generateSarif } from '../reporter/sarif.js'
-import type { Finding, ScanResult } from '../patterns/types.js'
+import { credentialPatterns } from '../patterns/index.js'
+import type { Finding, ScanResult, Severity } from '../patterns/types.js'
 
 const VERIFY_WARNING = `WARNING: --verify sends detected credential values to provider APIs
 (OpenAI, Anthropic, GitHub, Stripe, AWS STS) to check whether they are active.
 Source files are not uploaded. Do not use --verify if this violates your
 organization's security policy.`
 
-const args = parseArgs(process.argv)
+let args: ReturnType<typeof parseArgs>
+try {
+  args = parseArgs(process.argv)
+} catch (error) {
+  console.error(`secretguard: ${(error as Error).message}`)
+  console.error('Run secretguard --help for usage.')
+  process.exit(2)
+}
+
+const SEVERITY_RANK: Record<Severity, number> = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 }
+const patterns = args.pii ? undefined : credentialPatterns
+const failsBuild = (findings: { severity: Severity }[]) =>
+  findings.some((finding) => SEVERITY_RANK[finding.severity] >= SEVERITY_RANK[args.failOn])
 
 if (args.help) {
   console.log(`
@@ -35,6 +48,8 @@ Usage:
 Options:
   --ignore, -i <path>       Ignore a path (repeatable)
   --no-gitignore            Also scan files ignored by .gitignore
+  --no-pii                  Only scan for credentials (skip email, phone, SSN, card, IP)
+  --fail-on <severity>      Exit 1 at this severity or above (default: critical)
   --json                    Output results as JSON
   --history                 Scan full git commit history
   --staged                  Scan only staged (pre-commit) changes
@@ -87,7 +102,7 @@ if (args.history) {
     console.error('secretguard: --verify is not supported with --history yet (raw values are not kept)')
   }
 
-  const result = await scanHistory(args.target)
+  const result = await scanHistory(args.target, { patterns })
 
   if (args.json) {
     printHistoryJson(result)
@@ -95,11 +110,10 @@ if (args.history) {
     printHistoryReport(result)
   }
 
-  const hasCritical = result.findings.some((finding) => finding.severity === 'CRITICAL')
-  process.exitCode = hasCritical ? 1 : 0
+  process.exitCode = failsBuild(result.findings) ? 1 : 0
 } else if (args.staged) {
   // Keep raw until after optional --verify, then strip in finalizeFindings
-  const result = await scanStaged(args.target, { includeRaw: true })
+  const result = await scanStaged(args.target, { includeRaw: true, patterns })
   const findings = await finalizeFindings(result.findings)
   const enriched: ScanResult = { ...result, findings }
 
@@ -109,14 +123,14 @@ if (args.history) {
     printReport(enriched)
   }
 
-  const hasCritical = findings.some((finding) => finding.severity === 'CRITICAL')
-  process.exitCode = hasCritical ? 1 : 0
+  process.exitCode = failsBuild(findings) ? 1 : 0
 } else {
   const fileIgnore = await loadIgnoreFile(args.target)
   const rawResult = await scan(args.target, {
     ignore: [...args.ignore, ...fileIgnore],
     includeRaw: true,
     gitignore: args.gitignore,
+    patterns,
   })
 
   let findings = rawResult.findings
@@ -152,6 +166,5 @@ if (args.history) {
     printReport(result)
   }
 
-  const hasCritical = findings.some((finding) => finding.severity === 'CRITICAL')
-  process.exitCode = hasCritical ? 1 : 0
+  process.exitCode = failsBuild(findings) ? 1 : 0
 }
