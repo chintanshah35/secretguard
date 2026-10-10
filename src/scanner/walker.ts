@@ -1,6 +1,6 @@
 import { readdir } from 'fs/promises'
 import { join, relative } from 'path'
-import { DEFAULT_IGNORE } from './ignore.js'
+import { DEFAULT_IGNORE, isIgnored } from './ignore.js'
 
 export type WalkerOptions = {
   ignore?: string[]
@@ -19,7 +19,7 @@ async function* walk(directory: string, ignore: string[], root: string): AsyncGe
     const fullPath = join(directory, entry.name)
     const relativePath = relative(root, fullPath)
 
-    if (ignore.some((pattern) => relativePath.includes(pattern))) continue
+    if (isIgnored(relativePath, ignore)) continue
 
     if (entry.isDirectory()) {
       yield* walk(fullPath, ignore, root)
