@@ -49,6 +49,12 @@ const isRealPhone = (phone: string): boolean => {
   return true
 }
 
+const PHONE_LABEL = /phone|\btel\b|mobile|\bcell\b|\bfax\b|contact|\bcall\b/i
+
+// Unformatted 10-digit runs are usually unix timestamps, cache busters or z-index values
+const isLikelyUsPhone = (match: string, line = ''): boolean =>
+  isRealPhone(match) && (/[-.\s()+]/.test(match) || PHONE_LABEL.test(line))
+
 const SSN_LABEL = /\bssn\b|social[\s_-]?security|\bss#/i
 
 // Bare 9-digit numbers are everywhere (IDs, constants, timestamps), so only
@@ -86,10 +92,10 @@ export const piiPatterns: PatternMatch[] = [
   {
     name: 'Phone Number (US)',
     severity: 'MEDIUM',
-    // Lookbehind stops matches on the tail of longer numbers (timestamps, IDs)
-    pattern: /(?<![\d.])(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
+    // Lookbehind stops matches on the tail of longer numbers and identifiers (go2933276541)
+    pattern: /(?<![\w.])(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
     skipFiles: TEST_FILES,
-    filter: isRealPhone,
+    filter: isLikelyUsPhone,
     mask: (match) => {
       const digits = match.replace(/\D/g, '')
       return digits.slice(0, 3) + '-****-' + digits.slice(-2)
