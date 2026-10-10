@@ -96,7 +96,7 @@ if (args.history) {
   }
 
   const hasCritical = result.findings.some((finding) => finding.severity === 'CRITICAL')
-  process.exit(hasCritical ? 1 : 0)
+  process.exitCode = hasCritical ? 1 : 0
 } else if (args.staged) {
   // Keep raw until after optional --verify, then strip in finalizeFindings
   const result = await scanStaged(args.target, { includeRaw: true })
@@ -110,7 +110,7 @@ if (args.history) {
   }
 
   const hasCritical = findings.some((finding) => finding.severity === 'CRITICAL')
-  process.exit(hasCritical ? 1 : 0)
+  process.exitCode = hasCritical ? 1 : 0
 } else {
   const fileIgnore = await loadIgnoreFile(args.target)
   const rawResult = await scan(args.target, {
@@ -153,5 +153,5 @@ if (args.history) {
   }
 
   const hasCritical = findings.some((finding) => finding.severity === 'CRITICAL')
-  process.exit(hasCritical ? 1 : 0)
+  process.exitCode = hasCritical ? 1 : 0
 }
