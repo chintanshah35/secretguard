@@ -84,7 +84,8 @@ export const piiPatterns: PatternMatch[] = [
   {
     name: 'Phone Number (US)',
     severity: 'MEDIUM',
-    pattern: /(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
+    // Lookbehind stops matches on the tail of longer numbers (timestamps, IDs)
+    pattern: /(?<![\d.])(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
     skipFiles: TEST_FILES,
     filter: isRealPhone,
     mask: (match) => {
@@ -95,7 +96,7 @@ export const piiPatterns: PatternMatch[] = [
   {
     name: 'Phone Number (International)',
     severity: 'MEDIUM',
-    pattern: /\+(?:[1-9]\d{0,2})[-.\s]?\(?\d{1,4}\)?(?:[-.\s]\d{1,4}){2,4}\b/g,
+    pattern: /(?<!\d)\+(?:[1-9]\d{0,2})[-.\s]?\(?\d{1,4}\)?(?:[-.\s]\d{1,4}){2,4}\b/g,
     skipFiles: TEST_FILES,
     filter: isRealPhone,
     mask: (match) => match.slice(0, 4) + '****' + match.slice(-2),
@@ -125,7 +126,8 @@ export const piiPatterns: PatternMatch[] = [
     name: 'IPv4 Address',
     severity: 'LOW',
     // Excludes obviously safe ranges: localhost (127.x), private (10.x, 192.168.x, 172.16-31.x)
-    pattern: /\b(?!127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b/g,
+    // Lookarounds skip version strings like Chrome/120.0.0.0, v1.2.3.4 and 1.2.3.4.5
+    pattern: /(?<![\w/.-])(?<![Vv]ersion\s?)\b(?!127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b(?!\.\d)/g,
     skipFiles: TEST_FILES,
     mask: (match) => {
       const parts = match.split('.')
