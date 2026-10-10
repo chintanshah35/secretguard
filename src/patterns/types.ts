@@ -47,4 +47,6 @@ export type ScanOptions = {
   patterns?: PatternMatch[]
   /** Include raw secret values on findings. Default false to avoid accidental leaks. */
   includeRaw?: boolean
+  /** Inside a git repo, skip files git ignores. Default true. */
+  gitignore?: boolean
 }

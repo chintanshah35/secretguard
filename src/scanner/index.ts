@@ -1,5 +1,6 @@
 import { walkFiles } from './walker.js'
 import { matchFile } from './matcher.js'
+import { listGitFiles } from './git-files.js'
 import { allPatterns } from '../patterns/index.js'
 import { withoutRaw } from '../sanitize.js'
 import type { ScanResult, ScanOptions } from '../patterns/types.js'
@@ -9,8 +10,9 @@ export async function scan(targetPath: string, options: ScanOptions = {}): Promi
   const start = Date.now()
   let scanned = 0
   const findings = []
+  const gitFiles = options.gitignore === false ? null : await listGitFiles(targetPath)
 
-  for await (const filePath of walkFiles(targetPath, { root: targetPath, ignore: options.ignore })) {
+  for await (const filePath of walkFiles(targetPath, { root: targetPath, ignore: options.ignore, gitFiles })) {
     const fileFindings = await matchFile(filePath, patterns)
     findings.push(...fileFindings)
     scanned++

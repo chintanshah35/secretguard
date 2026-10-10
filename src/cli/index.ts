@@ -34,6 +34,7 @@ Usage:
 
 Options:
   --ignore, -i <path>       Ignore a path (repeatable)
+  --no-gitignore            Also scan files ignored by .gitignore
   --json                    Output results as JSON
   --history                 Scan full git commit history
   --staged                  Scan only staged (pre-commit) changes
@@ -115,6 +116,7 @@ if (args.history) {
   const rawResult = await scan(args.target, {
     ignore: [...args.ignore, ...fileIgnore],
     includeRaw: true,
+    gitignore: args.gitignore,
   })
 
   let findings = rawResult.findings

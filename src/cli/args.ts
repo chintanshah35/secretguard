@@ -10,6 +10,7 @@ export type CliArgs = {
   baseline: string | null
   updateBaseline: boolean
   verify: boolean
+  gitignore: boolean
   help: boolean
 }
 
@@ -27,6 +28,7 @@ export function parseArgs(argv: string[]): CliArgs {
     baseline: null,
     updateBaseline: false,
     verify: false,
+    gitignore: true,
     help: false,
   }
 
@@ -48,6 +50,8 @@ export function parseArgs(argv: string[]): CliArgs {
       result.sarif = args[++index] ?? null
     } else if (arg === '--baseline') {
       result.baseline = args[++index] ?? null
+    } else if (arg === '--no-gitignore') {
+      result.gitignore = false
     } else if (arg === '--update-baseline') {
       result.updateBaseline = true
     } else if (arg === '--ignore' || arg === '-i') {
