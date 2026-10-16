@@ -34,11 +34,20 @@ runs:
 
     - name: Run secretguard
       shell: bash
+      # Inputs go through env so a crafted value cannot inject shell
+      env:
+        SECRETGUARD_PATH: ${{ inputs.path }}
+        SECRETGUARD_ARGS: ${{ inputs.args }}
+        SECRETGUARD_VERIFY: ${{ inputs.verify }}
+        SECRETGUARD_VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
-        extra_args="${{ inputs.args }}"
-        if [ "${{ inputs.verify }}" = "true" ]; then
-          extra_args="--verify ${extra_args}"
+        if [[ ! "$SECRETGUARD_VERSION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+          echo "secretguard: invalid version input \"$SECRETGUARD_VERSION\"" >&2
+          exit 2
         fi
-        # shellcheck disable=SC2086
-        npx --yes "secretguard@${{ inputs.version }}" "${{ inputs.path }}" $extra_args
+        read -ra extra_args <<< "$SECRETGUARD_ARGS"
+        if [ "$SECRETGUARD_VERIFY" = "true" ]; then
+          extra_args=(--verify ${extra_args[@]+"${extra_args[@]}"})
+        fi
+        npx --yes "secretguard@${SECRETGUARD_VERSION}" "$SECRETGUARD_PATH" ${extra_args[@]+"${extra_args[@]}"}
