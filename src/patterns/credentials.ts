@@ -22,14 +22,26 @@ const hasRealPassword = (match: string) => {
   return !/^(?:\$\{?|<|\{\{|\*{3,}|x{3,})/i.test(password)
 }
 
-// Anon and publishable keys share the header but are meant to be public
-const isSupabaseServiceRole = (match: string) => {
+const decodeJwtPayload = (token: string) => {
   try {
-    const payload = JSON.parse(Buffer.from(match.split('.')[1], 'base64url').toString())
-    return payload?.role === 'service_role' && payload?.iss !== 'supabase-demo'
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString())
   } catch {
-    return false
+    return null
   }
+}
+
+// The Supabase CLI ships the same supabase-demo keys to everyone for local dev
+const isDemoJwt = (payload: { iss?: unknown } | null) => payload?.iss === 'supabase-demo'
+
+// Anon keys are embedded in frontends on purpose
+const isPrivateJwt = (match: string) => {
+  const payload = decodeJwtPayload(match)
+  return !isDemoJwt(payload) && payload?.role !== 'anon'
+}
+
+const isSupabaseServiceRole = (match: string) => {
+  const payload = decodeJwtPayload(match)
+  return payload?.role === 'service_role' && !isDemoJwt(payload)
 }
 
 export const credentialPatterns: PatternMatch[] = [
@@ -39,6 +51,7 @@ export const credentialPatterns: PatternMatch[] = [
     // Require all three parts and minimum realistic lengths to reduce false positives
     // on base64-encoded strings that happen to start with eyJ
     pattern: /eyJ[a-zA-Z0-9_\-]{10,}\.eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}/g,
+    filter: isPrivateJwt,
     mask: (match) => match.slice(0, 12) + '...[jwt]',
   },
   {
