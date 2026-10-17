@@ -29,7 +29,7 @@ function formatVerification(finding: Finding): string[] {
   ]
 }
 
-function formatRemediation(finding: Finding): string[] {
+function formatRemediation(finding: Pick<Finding, 'pattern' | 'remediation'>): string[] {
   const remediation = finding.remediation ?? getRemediation(finding.pattern)
   if (!remediation) return []
   const lines = [
@@ -101,7 +101,6 @@ function formatHistoryFinding(finding: HistoryFinding): string {
   const value = `${colors.gray}${finding.masked}${colors.reset}`
   const commit = `${colors.gray}${finding.commitShort} ${finding.commitDate.slice(0, 10)} — ${finding.commitMessage}${colors.reset}`
   const author = `${colors.gray}by ${finding.commitAuthor}${colors.reset}`
-  const asFinding = finding as Finding
 
   return [
     `  ${label} ${name}`,
@@ -109,8 +108,7 @@ function formatHistoryFinding(finding: HistoryFinding): string {
     `  commit ${commit}`,
     `  ${author}`,
     `  value ${value}`,
-    ...formatVerification(asFinding),
-    ...formatRemediation(asFinding),
+    ...formatRemediation(finding),
     '',
   ].join('\n')
 }
