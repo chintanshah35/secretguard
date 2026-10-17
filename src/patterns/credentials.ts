@@ -7,6 +7,31 @@ const maskSecret = (match: string): string => {
   return match.slice(0, 6) + '*'.repeat(Math.max(match.length - 10, 4)) + match.slice(-4)
 }
 
+const DEFAULT_PASSWORDS = new Set([
+  'postgres', 'password', 'pass', 'root', 'admin', 'guest', 'changeme', 'secret',
+  'test', 'example', 'mysql', 'mongo', 'redis', 'user', 'dev', 'local',
+])
+
+// Docker compose files and tutorials are full of default credentials that unlock nothing
+const hasRealPassword = (match: string) => {
+  const credentials = match.match(/:\/\/([^:/]+):([^@]+)@/)
+  if (!credentials) return true
+  const [, username, password] = credentials
+  if (password === username) return false
+  if (DEFAULT_PASSWORDS.has(password.toLowerCase())) return false
+  return !/^(?:\$\{?|<|\{\{|\*{3,}|x{3,})/i.test(password)
+}
+
+// Anon and publishable keys share the header but are meant to be public
+const isSupabaseServiceRole = (match: string) => {
+  try {
+    const payload = JSON.parse(Buffer.from(match.split('.')[1], 'base64url').toString())
+    return payload?.role === 'service_role' && payload?.iss !== 'supabase-demo'
+  } catch {
+    return false
+  }
+}
+
 export const credentialPatterns: PatternMatch[] = [
   {
     name: 'JWT Token',
@@ -255,6 +280,7 @@ export const credentialPatterns: PatternMatch[] = [
     name: 'Database URL (PostgreSQL)',
     severity: 'CRITICAL',
     pattern: /postgres(?:ql)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    filter: hasRealPassword,
     mask: (match) => {
       try {
         const url = new URL(match)
@@ -268,6 +294,7 @@ export const credentialPatterns: PatternMatch[] = [
     name: 'Database URL (MySQL)',
     severity: 'CRITICAL',
     pattern: /mysql:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    filter: hasRealPassword,
     mask: (match) => {
       try {
         const url = new URL(match)
@@ -281,18 +308,21 @@ export const credentialPatterns: PatternMatch[] = [
     name: 'Database URL (MongoDB)',
     severity: 'CRITICAL',
     pattern: /mongodb(?:\+srv)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    filter: hasRealPassword,
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
   {
     name: 'Database URL (Redis)',
     severity: 'CRITICAL',
     pattern: /rediss?:\/\/[^:\s]+:[^@\s]+@[^\s"']+/gi,
+    filter: hasRealPassword,
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
   {
     name: 'AMQP URL',
     severity: 'CRITICAL',
     pattern: /amqps?:\/\/[^:\s]+:[^@\s]+@[^\s"']+/gi,
+    filter: hasRealPassword,
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
       {
@@ -392,6 +422,7 @@ export const credentialPatterns: PatternMatch[] = [
     severity: 'CRITICAL',
     // Supabase service_role JWTs have a fixed header and are >200 chars
     pattern: /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_\-]{60,}\.[a-zA-Z0-9_\-]{43}/g,
+    filter: isSupabaseServiceRole,
     mask: (match) => match.slice(0, 20) + '...[supabase-jwt]',
   },
   {
