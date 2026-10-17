@@ -31,7 +31,12 @@ const FAKE_LOCALS = new Set([
 // Package specs like slash@3.0.0.js or vite@5.1.0 look like emails to the regex
 const FILE_EXTENSIONS = /\.(?:m?js|cjs|jsx|tsx?|css|map|json|html?|md|svg|png|jpe?g|gif|webp|woff2?|ttf|gz|tgz|zip|wasm|node)$/
 
-const isRealEmail = (email: string): boolean => {
+// In scheme://user:password@host the password@host part is a credential, not an email
+const isUrlUserinfo = (line: string, index: number) =>
+  /:\/\/[^\s/@]*:$/.test(line.slice(Math.max(0, index - 256), index))
+
+const isRealEmail = (email: string, line = '', index = 0): boolean => {
+  if (isUrlUserinfo(line, index)) return false
   const [local, domain] = email.toLowerCase().split('@')
   if (!local || !domain) return false
   if (FAKE_DOMAINS.has(domain)) return false
