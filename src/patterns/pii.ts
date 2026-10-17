@@ -81,7 +81,9 @@ export const piiPatterns: PatternMatch[] = [
   {
     name: 'Email Address',
     severity: 'MEDIUM',
-    pattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,
+    // The lookbehind pins the start to the beginning of a run and the bounds follow RFC 5321.
+    // Without them, long minified or base64 lines backtrack quadratically and hang the scan.
+    pattern: /(?<![a-zA-Z0-9._%+\-])[a-zA-Z0-9._%+\-]{1,64}@[a-zA-Z0-9.\-]{1,253}\.[a-zA-Z]{2,24}\b/g,
     skipFiles: TEST_FILES,
     filter: isRealEmail,
     mask: (match) => {
