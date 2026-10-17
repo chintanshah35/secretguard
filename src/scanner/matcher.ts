@@ -1,12 +1,15 @@
 import { readFile } from 'fs/promises'
 import type { Finding, PatternMatch } from '../patterns/types.js'
 import { BINARY_EXTENSIONS } from './ignore.js'
-import { extname } from 'path'
+import { extname, relative } from 'path'
 
 export async function matchFile(
   filePath: string,
-  patterns: PatternMatch[]
+  patterns: PatternMatch[],
+  root = '.'
 ): Promise<Finding[]> {
+  // Test against the path inside the scan root so a parent dir like ~/test doesn't disable PII rules
+  const relativePath = relative(root, filePath)
   const extension = extname(filePath).toLowerCase()
   if (BINARY_EXTENSIONS.has(extension)) return []
 
@@ -23,7 +26,7 @@ export async function matchFile(
   const findings: Finding[] = []
 
   for (const pattern of patterns) {
-    if (pattern.skipFiles?.test(filePath)) continue
+    if (pattern.skipFiles?.test(relativePath)) continue
     // Reset stateful regex before each file
     pattern.pattern.lastIndex = 0
 
@@ -33,7 +36,7 @@ export async function matchFile(
 
       let match: RegExpExecArray | null
       while ((match = pattern.pattern.exec(line)) !== null) {
-        if (pattern.filter && !pattern.filter(match[0], line)) continue
+        if (pattern.filter && !pattern.filter(match[0], line, match.index)) continue
         findings.push({
           file: filePath,
           line: lineIndex + 1,

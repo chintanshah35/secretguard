@@ -6,7 +6,7 @@ export type PatternMatch = {
   pattern: RegExp
   mask: (match: string) => string
   /** Return false to skip this match — use to reduce false positives. `line` is the full source line. */
-  filter?: (match: string, line: string) => boolean
+  filter?: (match: string, line: string, index: number) => boolean
   /** Skip this pattern entirely for files whose path matches — e.g. test files */
   skipFiles?: RegExp
 }

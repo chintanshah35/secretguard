@@ -45,7 +45,7 @@ function scanStagedDiff(diff: string, patterns: PatternMatch[]): Finding[] {
         pattern.pattern.lastIndex = 0
         let match: RegExpExecArray | null
         while ((match = pattern.pattern.exec(content)) !== null) {
-          if (pattern.filter && !pattern.filter(match[0], content)) continue
+          if (pattern.filter && !pattern.filter(match[0], content, match.index)) continue
           if (pattern.skipFiles?.test(currentFile)) continue
           column = (match.index ?? 0) + 1
           findings.push({

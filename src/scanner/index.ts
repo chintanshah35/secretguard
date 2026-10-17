@@ -1,4 +1,5 @@
 import { stat } from 'fs/promises'
+import { dirname } from 'path'
 import { walkFiles } from './walker.js'
 import { matchFile } from './matcher.js'
 import { listGitFiles } from './git-files.js'
@@ -25,7 +26,7 @@ export async function scan(targetPath: string, options: ScanOptions = {}): Promi
       })
 
   for await (const filePath of files) {
-    const fileFindings = await matchFile(filePath, patterns)
+    const fileFindings = await matchFile(filePath, patterns, target.isFile() ? dirname(targetPath) : targetPath)
     findings.push(...fileFindings)
     scanned++
   }
