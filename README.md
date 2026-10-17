@@ -6,7 +6,7 @@ Scan your source code for secrets, credentials, and PII before they reach produc
 npx secretguard .
 ```
 
-Exits with code `1` if any CRITICAL findings are detected — drop it into your CI pipeline and it just works.
+Exits with code `1` if any CRITICAL findings are detected (change it with `--fail-on`) — drop it into your CI pipeline and it just works.
 
 ## What it detects
 
@@ -79,7 +79,21 @@ PII scanning is tuned for production source, not test fixtures.
 
 **Filtered fake values** — in other files, obvious placeholders are ignored (e.g. `user@example.com`, `test@test.com`, US `555-` numbers, all-same-digit phones).
 
+**Lockfiles skip PII** — `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock` and friends list maintainer emails, so PII patterns do not run there. Credential patterns still do, because private registry URLs can carry tokens.
+
+**Numbers need to look like the real thing:**
+
+- SSNs must be dashed (`123-45-6789`), or have an `ssn` / `social security` label on the same line
+- Card numbers must pass the Luhn check
+- Unformatted 10-digit phone numbers need a label like `phone` or `tel` on the line
+- Digits after a decimal point, inside identifiers, or at the end of longer numbers never match
+- Version strings (`Chrome/120.0.0.0`, `v1.2.3.4`) are not IP addresses
+
 **Credentials are always scanned** — API keys and tokens in test files are still reported. A real `ghp_` or `sk_live_` in a test is still a leak risk.
+
+`tests/corpus/real-world` holds snippets that tripped earlier versions (math constants, user agents, timestamps, CSS class hashes, lockfiles). CI asserts zero findings on it.
+
+If you only care about credentials, use `--no-pii`.
 
 ## Install
 
@@ -107,6 +121,15 @@ secretguard . --ignore tests --ignore fixtures
 
 # Output as JSON
 secretguard . --json
+
+# Credentials only, no PII patterns
+secretguard . --no-pii
+
+# Fail the run on HIGH or above instead of CRITICAL only
+secretguard . --fail-on high
+
+# Also scan files ignored by .gitignore
+secretguard . --no-gitignore
 
 # Save HTML report (-o shorthand works too)
 secretguard . --output report.html
@@ -155,6 +178,8 @@ node_modules  .git  dist  build  coverage
 
 Binary files (images, PDFs, archives, compiled binaries) are skipped automatically.
 
+Inside a git repository, files ignored by your `.gitignore` are skipped too, so a local `.env.local` does not fail the run. Pass `--no-gitignore` to scan them.
+
 Add a `.secretguardignore` file to your project root to ignore additional paths:
 
 ```
@@ -162,7 +187,10 @@ Add a `.secretguardignore` file to your project root to ignore additional paths:
 tests/
 fixtures/
 src/mocks/
+*.min.js
 ```
+
+Patterns match whole path segments: `tests` skips any `tests/` directory but not `contest/`. A pattern with a `/` is anchored to the scan root, and `*` matches within one segment. The same rules apply to `--ignore`.
 
 ## CI/CD
 
@@ -183,7 +211,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Scan for secrets
-        uses: chintanshah35/secretguard@v1.3.0
+        uses: chintanshah35/secretguard@v1.4.0
         with:
           path: .
           args: --sarif results.sarif
@@ -197,7 +225,7 @@ jobs:
 Optional live verification (sends candidate secrets to provider APIs):
 
 ```yaml
-- uses: chintanshah35/secretguard@v1.3.0
+- uses: chintanshah35/secretguard@v1.4.0
   with:
     path: .
     verify: 'true'
@@ -226,7 +254,7 @@ secretguard install-hook
 
 The hook runs `secretguard --staged` before each commit and blocks if CRITICAL findings are detected. Use `git commit --no-verify` to bypass.
 
-The exit code is `0` when no CRITICAL findings are detected, `1` otherwise.
+The exit code is `0` when nothing at or above the `--fail-on` severity (default `critical`) is found, `1` otherwise, and `2` for invalid arguments.
 
 ## Git history scanning
 
@@ -301,6 +329,9 @@ const result = await scan('./src', {
 
 // Opt in to raw values only when you need them for custom tooling
 const withRaw = await scan('./src', { includeRaw: true })
+
+// Inside a git repo, gitignored files are skipped unless you turn it off
+const everything = await scan('./src', { gitignore: false })
 
 console.log(result.findings)  // Finding[] (masked only by default)
 console.log(result.scanned)   // number of files scanned
