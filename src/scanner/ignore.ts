@@ -11,6 +11,10 @@ export const DEFAULT_IGNORE = [
   'vendor',
   '__pycache__',
   '.venv',
+  '.yarn/releases',
+  '.yarn/cache',
+  '.pnp.cjs',
+  '.pnp.loader.mjs',
 ]
 
 const globToSource = (glob: string) =>
