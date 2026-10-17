@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { existsSync } from 'fs'
 import { writeFile } from 'fs/promises'
 import { parseArgs } from './args.js'
 import { scan } from '../scanner/index.js'
@@ -29,6 +30,11 @@ try {
 } catch (error) {
   console.error(`secretguard: ${(error as Error).message}`)
   console.error('Run secretguard --help for usage.')
+  process.exit(2)
+}
+
+if (!args.help && !existsSync(args.target)) {
+  console.error(`secretguard: path not found: ${args.target}`)
   process.exit(2)
 }
 

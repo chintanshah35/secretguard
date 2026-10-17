@@ -1,3 +1,4 @@
+import { stat } from 'fs/promises'
 import { walkFiles } from './walker.js'
 import { matchFile } from './matcher.js'
 import { listGitFiles } from './git-files.js'
@@ -10,9 +11,20 @@ export async function scan(targetPath: string, options: ScanOptions = {}): Promi
   const start = Date.now()
   let scanned = 0
   const findings = []
-  const gitFiles = options.gitignore === false ? null : await listGitFiles(targetPath)
 
-  for await (const filePath of walkFiles(targetPath, { root: targetPath, ignore: options.ignore, gitFiles })) {
+  const target = await stat(targetPath).catch(() => null)
+  if (!target) throw new Error(`Path not found: ${targetPath}`)
+
+  // An explicitly named file is always scanned, even if gitignored
+  const files = target.isFile()
+    ? [targetPath]
+    : walkFiles(targetPath, {
+        root: targetPath,
+        ignore: options.ignore,
+        gitFiles: options.gitignore === false ? null : await listGitFiles(targetPath),
+      })
+
+  for await (const filePath of files) {
     const fileFindings = await matchFile(filePath, patterns)
     findings.push(...fileFindings)
     scanned++
