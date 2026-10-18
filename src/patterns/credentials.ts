@@ -19,7 +19,15 @@ const hasRealPassword = (match: string) => {
   const [, username, password] = credentials
   if (password === username) return false
   if (DEFAULT_PASSWORDS.has(password.toLowerCase())) return false
-  return !/^(?:\$\{?|<|\{\{|\*{3,}|x{3,})/i.test(password)
+  // Only a fully-wrapped template is a placeholder. A bare `$FOO` or unclosed `<foo`
+  // is ambiguous with a real value, so we flag it — a missed credential is worse than noise.
+  return !(
+    /^\$\{[^}]*\}$/.test(password) || // ${DB_PASSWORD}
+    /^<[^>]*>$/.test(password) || // <password>
+    /^\{\{[^}]*\}\}$/.test(password) || // {{password}}
+    /^\*{3,}$/.test(password) || // ****
+    /^x{3,}$/i.test(password) // xxxx
+  )
 }
 
 const decodeJwtPayload = (token: string) => {
@@ -292,7 +300,8 @@ export const credentialPatterns: PatternMatch[] = [
   {
     name: 'Database URL (PostgreSQL)',
     severity: 'CRITICAL',
-    pattern: /postgres(?:ql)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    // Bounded quantifiers: unbounded [^@]+ backtracks quadratically on a long line with no @.
+    pattern: /postgres(?:ql)?:\/\/[^\s:/@"']{1,256}:[^\s@"']{1,256}@[^\s"']{1,2048}/gi,
     filter: hasRealPassword,
     mask: (match) => {
       try {
@@ -306,7 +315,7 @@ export const credentialPatterns: PatternMatch[] = [
   {
     name: 'Database URL (MySQL)',
     severity: 'CRITICAL',
-    pattern: /mysql:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    pattern: /mysql:\/\/[^\s:/@"']{1,256}:[^\s@"']{1,256}@[^\s"']{1,2048}/gi,
     filter: hasRealPassword,
     mask: (match) => {
       try {
@@ -320,58 +329,58 @@ export const credentialPatterns: PatternMatch[] = [
   {
     name: 'Database URL (MongoDB)',
     severity: 'CRITICAL',
-    pattern: /mongodb(?:\+srv)?:\/\/[^:]+:[^@]+@[^\s"']+/gi,
+    pattern: /mongodb(?:\+srv)?:\/\/[^\s:/@"']{1,256}:[^\s@"']{1,256}@[^\s"']{1,2048}/gi,
     filter: hasRealPassword,
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
   {
     name: 'Database URL (Redis)',
     severity: 'CRITICAL',
-    pattern: /rediss?:\/\/[^:\s]+:[^@\s]+@[^\s"']+/gi,
+    pattern: /rediss?:\/\/[^\s:/@"']{1,256}:[^\s@"']{1,256}@[^\s"']{1,2048}/gi,
     filter: hasRealPassword,
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
   {
     name: 'AMQP URL',
     severity: 'CRITICAL',
-    pattern: /amqps?:\/\/[^:\s]+:[^@\s]+@[^\s"']+/gi,
+    pattern: /amqps?:\/\/[^\s:/@"']{1,256}:[^\s@"']{1,256}@[^\s"']{1,2048}/gi,
     filter: hasRealPassword,
     mask: (match) => match.replace(/:\/\/[^:]+:[^@]+@/, '://****:****@'),
   },
       {
     name: 'RSA Private Key',
     severity: 'CRITICAL',
-    pattern: /-----BEGIN RSA PRIVATE KEY-----[\s\S]+?-----END RSA PRIVATE KEY-----/g,
+    pattern: /-----BEGIN RSA PRIVATE KEY-----(?:-(?!----)|[A-Za-z0-9+/=\s:,.]){1,16384}-----END RSA PRIVATE KEY-----/g,
     mask: () => '-----BEGIN RSA PRIVATE KEY----- [redacted] -----END RSA PRIVATE KEY-----',
   },
   {
     name: 'EC Private Key',
     severity: 'CRITICAL',
-    pattern: /-----BEGIN EC PRIVATE KEY-----[\s\S]+?-----END EC PRIVATE KEY-----/g,
+    pattern: /-----BEGIN EC PRIVATE KEY-----(?:-(?!----)|[A-Za-z0-9+/=\s:,.]){1,16384}-----END EC PRIVATE KEY-----/g,
     mask: () => '-----BEGIN EC PRIVATE KEY----- [redacted] -----END EC PRIVATE KEY-----',
   },
   {
     name: 'OpenSSH Private Key',
     severity: 'CRITICAL',
-    pattern: /-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]+?-----END OPENSSH PRIVATE KEY-----/g,
+    pattern: /-----BEGIN OPENSSH PRIVATE KEY-----(?:-(?!----)|[A-Za-z0-9+/=\s:,.]){1,16384}-----END OPENSSH PRIVATE KEY-----/g,
     mask: () => '-----BEGIN OPENSSH PRIVATE KEY----- [redacted] -----END OPENSSH PRIVATE KEY-----',
   },
   {
     name: 'PGP Private Key',
     severity: 'CRITICAL',
-    pattern: /-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]+?-----END PGP PRIVATE KEY BLOCK-----/g,
+    pattern: /-----BEGIN PGP PRIVATE KEY BLOCK-----(?:-(?!----)|[A-Za-z0-9+/=\s:,.]){1,16384}-----END PGP PRIVATE KEY BLOCK-----/g,
     mask: () => '-----BEGIN PGP PRIVATE KEY BLOCK----- [redacted] -----END PGP PRIVATE KEY BLOCK-----',
   },
   {
     name: 'PKCS8 Private Key',
     severity: 'CRITICAL',
-    pattern: /-----BEGIN PRIVATE KEY-----[\s\S]+?-----END PRIVATE KEY-----/g,
+    pattern: /-----BEGIN PRIVATE KEY-----(?:-(?!----)|[A-Za-z0-9+/=\s:,.]){1,16384}-----END PRIVATE KEY-----/g,
     mask: () => '-----BEGIN PRIVATE KEY----- [redacted] -----END PRIVATE KEY-----',
   },
   {
     name: 'DSA Private Key',
     severity: 'CRITICAL',
-    pattern: /-----BEGIN DSA PRIVATE KEY-----[\s\S]+?-----END DSA PRIVATE KEY-----/g,
+    pattern: /-----BEGIN DSA PRIVATE KEY-----(?:-(?!----)|[A-Za-z0-9+/=\s:,.]){1,16384}-----END DSA PRIVATE KEY-----/g,
     mask: () => '-----BEGIN DSA PRIVATE KEY----- [redacted] -----END DSA PRIVATE KEY-----',
   },
       {

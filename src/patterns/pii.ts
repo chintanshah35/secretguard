@@ -31,9 +31,11 @@ const FAKE_LOCALS = new Set([
 // Package specs like slash@3.0.0.js or vite@5.1.0 look like emails to the regex
 const FILE_EXTENSIONS = /\.(?:m?js|cjs|jsx|tsx?|css|map|json|html?|md|svg|png|jpe?g|gif|webp|woff2?|ttf|gz|tgz|zip|wasm|node)$/
 
-// In scheme://user:password@host the password@host part is a credential, not an email
+// In scheme://user:password@host the password@host part is a credential, not an email.
+// The password can hold symbols (! # & $ <) that split the email match, so accept any
+// run of password characters between the userinfo ':' and the match, not just up to ':'.
 const isUrlUserinfo = (line: string, index: number) =>
-  /:\/\/[^\s/@]*:$/.test(line.slice(Math.max(0, index - 256), index))
+  /:\/\/[^\s/@]+:[^\s@]*$/.test(line.slice(Math.max(0, index - 256), index))
 
 const isRealEmail = (email: string, line = '', index = 0): boolean => {
   if (isUrlUserinfo(line, index)) return false
@@ -54,7 +56,9 @@ const EMAIL_SKIP_FILES = new RegExp(
 )
 
 // OIDs and RFC section numbers (1.3.6.1, 2.4.1.3) are dotted quads of small numbers
-const isLikelyPublicIp = (match: string) => {
+const isLikelyPublicIp = (match: string, line = '', index = 0) => {
+  // Docker/image tags like `postgres:15.8.1.100` read as IPs — skip a quad glued to `name:`
+  if (/[A-Za-z][\w.\-]*:$/.test(line.slice(0, index))) return false
   const octets = match.split('.').map(Number)
   if (octets[0] === 0) return false
   if (octets[0] === 169 && octets[1] === 254) return false

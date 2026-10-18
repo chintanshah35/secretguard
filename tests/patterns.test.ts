@@ -39,6 +39,32 @@ describe('PII patterns', () => {
     }
   })
 
+  it('does not report URL userinfo passwords (with symbols) as emails', () => {
+    const entry = findPattern(piiPatterns, 'Email Address')
+    const urls = [
+      'postgres://svc:pa!ss@db.prod.internal',
+      'redis://svc:p#a$s&s@cache.prod.internal',
+      'mongodb+srv://svc:p<a>ss@cluster.prod.internal',
+    ]
+    for (const line of urls) {
+      entry.pattern.lastIndex = 0
+      let match: RegExpExecArray | null
+      let kept = 0
+      while ((match = entry.pattern.exec(line)) !== null) {
+        if (entry.filter!(match[0], line, match.index)) kept++
+      }
+      expect(kept, line).toBe(0)
+    }
+  })
+
+  it('still reports a standalone email that follows a colon', () => {
+    const entry = findPattern(piiPatterns, 'Email Address')
+    const line = 'owner: real.person@acme.io'
+    entry.pattern.lastIndex = 0
+    const match = entry.pattern.exec(line)!
+    expect(entry.filter!(match[0], line, match.index)).toBe(true)
+  })
+
   it('detects real US phone numbers', () => {
     const entry = findPattern(piiPatterns, 'Phone Number (US)')
     expect(entry.filter!('415-823-9147')).toBe(true)
@@ -59,6 +85,26 @@ describe('PII patterns', () => {
     expect(entry.skipFiles!.test('/src/mocks/data.ts')).toBe(true)
     expect(entry.skipFiles!.test('/src/auth.ts')).toBe(false)
     expect(entry.skipFiles!.test('/src/controllers/user.ts')).toBe(false)
+  })
+
+  it('does not report docker image tags as IPv4 addresses', () => {
+    const entry = findPattern(piiPatterns, 'IPv4 Address')
+    const line = 'image: supabase/postgres:15.8.1.100'
+    entry.pattern.lastIndex = 0
+    let match: RegExpExecArray | null
+    let kept = 0
+    while ((match = entry.pattern.exec(line)) !== null) {
+      if (entry.filter!(match[0], line, match.index)) kept++
+    }
+    expect(kept).toBe(0)
+  })
+
+  it('still reports a public IPv4 that is not an image tag', () => {
+    const entry = findPattern(piiPatterns, 'IPv4 Address')
+    const line = 'upstream 34.120.5.9 weight=1'
+    entry.pattern.lastIndex = 0
+    const match = entry.pattern.exec(line)!
+    expect(entry.filter!(match[0], line, match.index)).toBe(true)
   })
 
   it('detects SSNs', () => {

@@ -18,3 +18,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      # Dogfood: secretguard must find nothing in its own tree beyond the known-safe baseline
+      # (its own regex literals and documentation examples). Fails if a new secret-shaped
+      # string lands in the repo.
+      - run: node dist/cli/index.js . --baseline .secretguard-baseline.json
