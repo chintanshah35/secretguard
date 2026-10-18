@@ -31,7 +31,7 @@ Exits with code `1` if any CRITICAL findings are detected (change it with `--fai
 - HuggingFace access tokens (`hf_...`)
 - Vercel, Netlify (`nf_`), and DigitalOcean (`dop_v1_`, `doo_v1_`) tokens
 - PlanetScale (`pscale_tkn_`), Terraform Cloud (`at.`), Pulumi (`pul-`), Vault (`hvs.`/`hvb.`)
-- Supabase service role keys (long JWT)
+- Supabase service role keys (JWT with `role: service_role`)
 - Cloudflare API tokens and global API keys
 - Azure storage connection strings and client secrets
 - Firebase service account key markers
@@ -41,11 +41,11 @@ Exits with code `1` if any CRITICAL findings are detected (change it with `--fai
 - Algolia, Contentful, and Heroku API keys
 - PyPI API tokens (`pypi-...`)
 - Doppler service and personal tokens (`dp.st.`, `dp.pt.`)
-- Database URLs (PostgreSQL, MySQL, MongoDB, Redis, AMQP — credentials in URL)
+- Database URLs (PostgreSQL, MySQL, MongoDB, Redis, AMQP) with a real password. Defaults like `postgres:postgres` and `${DB_PASSWORD}` placeholders are skipped
 - RSA, EC, DSA, PKCS8, OpenSSH, and PGP private keys
 
 **Credentials — HIGH**
-- JWT tokens
+- JWT tokens (anon and `supabase-demo` keys skipped)
 - Stripe live publishable keys (`pk_live_`)
 - Google API keys (`AIzaSy...`)
 - Firebase web API keys
@@ -74,20 +74,23 @@ PII scanning is tuned for production source, not test fixtures.
 **Skipped in test-like paths** — email, phone, SSN, credit card, and public IP patterns do not run in:
 
 - `*.test.*`, `*.spec.*`
-- `__tests__/`, `__mocks__/`
+- `test/`, `tests/`, `__tests__/`, `__mocks__/`
 - `fixtures/`, `mocks/`, `stubs/`
+- `*.min.js`, `*.min.css`, `*.map`
 
-**Filtered fake values** — in other files, obvious placeholders are ignored (e.g. `user@example.com`, `test@test.com`, US `555-` numbers, all-same-digit phones).
+Paths are checked relative to the scan root, so a parent dir named `test` does not count.
+
+**Filtered fake values** — in other files, obvious placeholders are ignored (e.g. `user@example.com`, `test@test.com`, US `555` numbers, all-same-digit phones). Emails also skip package specs (`slash@3.0.0.js`), `git@` remotes, passwords inside URLs, and published author emails in `package.json`, `LICENSE`, `AUTHORS` and similar files.
 
 **Lockfiles skip PII** — `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock` and friends list maintainer emails, so PII patterns do not run there. Credential patterns still do, because private registry URLs can carry tokens.
 
 **Numbers need to look like the real thing:**
 
-- SSNs must be dashed (`123-45-6789`), or have an `ssn` / `social security` label on the same line
+- SSNs must be dashed (`123-45-6789`), or have an `ssn` / `social security` label within 40 characters
 - Card numbers must pass the Luhn check
-- Unformatted 10-digit phone numbers need a label like `phone` or `tel` on the line
+- Unformatted 10-digit phone numbers need a label like `phone` or `tel` within 40 characters, and US numbers must be valid NANP
 - Digits after a decimal point, inside identifiers, or at the end of longer numbers never match
-- Version strings (`Chrome/120.0.0.0`, `v1.2.3.4`) are not IP addresses
+- Version strings (`Chrome/120.0.0.0`, `v1.2.3.4`), OIDs (`1.3.6.1`), `0.0.0.0` and `169.254.x` are not reported as IP addresses
 
 **Credentials are always scanned** — API keys and tokens in test files are still reported. A real `ghp_` or `sk_live_` in a test is still a leak risk.
 
@@ -113,8 +116,9 @@ npx secretguard .
 # Scan current directory
 secretguard .
 
-# Scan a specific path
+# Scan a specific path or file
 secretguard ./src
+secretguard src/config.ts
 
 # Ignore additional paths (-i shorthand works too)
 secretguard . --ignore tests --ignore fixtures
@@ -174,6 +178,7 @@ The following paths are ignored automatically — no configuration needed:
 ```
 node_modules  .git  dist  build  coverage
 .next  .nuxt  .turbo  .cache  vendor  __pycache__  .venv
+.yarn/releases  .yarn/cache  .pnp.cjs  .pnp.loader.mjs
 ```
 
 Binary files (images, PDFs, archives, compiled binaries) are skipped automatically.
@@ -254,7 +259,7 @@ secretguard install-hook
 
 The hook runs `secretguard --staged` before each commit and blocks if CRITICAL findings are detected. Use `git commit --no-verify` to bypass.
 
-The exit code is `0` when nothing at or above the `--fail-on` severity (default `critical`) is found, `1` otherwise, and `2` for invalid arguments.
+The exit code is `0` when nothing at or above the `--fail-on` severity (default `critical`) is found, `1` otherwise, and `2` for invalid arguments or a missing path.
 
 ## Git history scanning
 
