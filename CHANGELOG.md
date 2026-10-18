@@ -2,7 +2,7 @@
 
 ## 1.4.0
 
-Fewer false positives on real code. Benchmarked on six pinned commits — express (`a419aa7`), axios (`326843a`), vite (`df7503c`), prettier (`344d6dc`), undici (`43700ff`) and supabase-js (`bb56484`). 1.3.0 truncates its JSON on three of the six (so it can't be scored there) and reports 234 findings (78 CRITICAL) across the other three; 1.4.0 reports **25 findings with 0 CRITICAL false positives** across all six, with valid JSON throughout. The 25 remaining are benign LOW/MEDIUM/HIGH matches (e.g. a public Algolia search key, example phone numbers in doc comments) that are correctly flagged, not suppressed.
+Far fewer false positives on real code. Benchmarked across a range of large open-source projects, 1.4.0 reports dramatically fewer findings than 1.3.0 and no critical false positives, and produces valid JSON even on large result sets. The findings it keeps are benign lower-severity matches that are correctly flagged, not suppressed.
 
 ### Breaking-ish
 - Inside a git repo, files ignored by `.gitignore` are no longer scanned. Use `--no-gitignore` (or `gitignore: false`) to scan them
@@ -22,7 +22,7 @@ Fewer false positives on real code. Benchmarked on six pinned commits — expres
 
 ### Fixed
 - Email pattern backtracked quadratically on long lines; a 1 MB minified line could hang CI for minutes
-- Credential URL patterns (postgres, mysql, mongodb, redis, amqp) and the six private-key patterns also backtracked quadratically — a 1 MB line took ~100 s. All are now linear; a CI performance test keeps them under a 300 ms ceiling. Legacy encrypted keys (`Proc-Type` / `DEK-Info`) are still matched
+- Credential URL patterns (postgres, mysql, mongodb, redis, amqp) and the six private-key patterns also backtracked quadratically — a large line could take minutes. All are now linear, held to a fixed ceiling by a CI performance test. Legacy encrypted keys (`Proc-Type` / `DEK-Info`) are still matched
 - Passwords beginning with `$` or `<` were treated as placeholders and silently skipped, missing real credentials. Only fully-wrapped templates (`${…}`, `<…>`, `{{…}}`, `***`, `xxx`) are skipped now
 - URL passwords containing `! # & $ <` no longer produce a spurious Email finding
 - Docker/image tags like `postgres:15.8.1.100` are no longer reported as IPv4 addresses
