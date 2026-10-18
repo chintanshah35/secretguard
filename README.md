@@ -259,7 +259,7 @@ secretguard install-hook
 
 The hook runs `secretguard --staged` before each commit and blocks if CRITICAL findings are detected. Use `git commit --no-verify` to bypass.
 
-The exit code is `0` when nothing at or above the `--fail-on` severity (default `critical`) is found, `1` otherwise, and `2` for invalid arguments or a missing path.
+The exit code is `0` when nothing at or above the `--fail-on` severity (default `critical`) is found, `1` otherwise, `2` for invalid arguments or a missing path, and `3` if the scan hit an unexpected internal error (so CI can tell a broken scan apart from one that found secrets).
 
 ## Git history scanning
 
