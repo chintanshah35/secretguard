@@ -2,23 +2,32 @@
 
 ## 1.4.0
 
-Fewer false positives on real code. The published 1.3.0 reports 19 findings (6 CRITICAL) on `tests/corpus/real-world`; 1.4.0 reports none.
+Fewer false positives on real code. On express, axios, vite, prettier, undici and supabase-js, 1.3.0 reports 234 findings (78 CRITICAL) and truncates JSON on three of them; 1.4.0 reports 26 with no CRITICAL.
 
 ### Breaking-ish
 - Inside a git repo, files ignored by `.gitignore` are no longer scanned. Use `--no-gitignore` (or `gitignore: false`) to scan them
 - `--ignore` and `.secretguardignore` match whole path segments: `test` no longer skips `contest/` or `latest.ts`, and `.env` no longer skips `.env.local` (use `.env*`)
 - Unknown flags and flags missing a value exit with code 2 instead of being ignored
+- PII patterns skip `test/` and `tests/` dirs, `*.min.js`, `*.min.css` and `*.map`. Credentials are still checked there
+- `.yarn/releases`, `.yarn/cache` and `.pnp.*` are ignored by default
+- A missing scan path exits with code 2 and a one-line error
 
 ### Added
 - `--no-pii` to scan credentials only
 - `--fail-on <low|medium|high|critical>` to choose the severity that fails the run (default critical)
 - `*` wildcards in ignore patterns (`*.min.js`)
+- Scanning a single file: `secretguard src/config.ts`
 
 ### Fixed
-- SSN: bare 9-digit numbers need an `ssn` / `social security` label on the line; digits after a decimal point never match
+- Email pattern backtracked quadratically on long lines; a 1 MB minified line could hang CI for minutes
+- SSN: bare 9-digit numbers need an `ssn` / `social security` label within 40 characters; digits after a decimal point never match
 - Credit cards: Luhn check, and no matches after a decimal point
-- US phone: no matches on the tail of longer numbers or inside identifiers; unformatted 10-digit runs need a phone label
-- IPv4: skips version strings like `Chrome/120.0.0.0`, `v1.2.3.4`, `version 4.12.3.1`, `1.2.3.4.5`
+- US phone: no matches on the tail of longer numbers or inside identifiers; unformatted 10-digit runs need a phone label within 40 characters; invalid NANP numbers and the fictional 555 exchange are skipped
+- IPv4: skips version strings like `Chrome/120.0.0.0`, `v1.2.3.4`, `1.2.3.4.5`, plus `0.x`, link-local `169.254.x`, broadcast, and OIDs or section numbers made of small octets
+- Email: skips package specs (`slash@3.0.0.js`), `git@` remotes, subdomains of example domains, URL passwords, and author emails in `package.json`, `LICENSE`, `AUTHORS` and similar files
+- Supabase Service Role Key only fires on JWTs whose role is `service_role`. Anon keys and the CLI's `supabase-demo` keys are skipped, also by the generic JWT rule
+- Database URLs with default or placeholder passwords (`postgres:postgres`, `app:app`, `${DB_PASSWORD}`) are skipped
+- File skip rules are checked relative to the scan root, so scanning `~/test/app` no longer disables PII rules
 - Lockfiles skip PII patterns; `yarn.lock` is now scanned for credentials (it was treated as binary)
 - `--history` respects per-pattern file skips
 - `--json` output was cut off at 64 KB when piped and findings existed
