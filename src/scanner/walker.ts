@@ -38,7 +38,14 @@ function parentDirectories(files: Set<string>): Set<string> {
 }
 
 async function* walk(directory: string, state: WalkState): AsyncGenerator<string> {
-  const entries = await readdir(directory, { withFileTypes: true })
+  let entries
+  try {
+    entries = await readdir(directory, { withFileTypes: true })
+  } catch (error) {
+    // An unreadable directory (EACCES, etc.) should not crash the whole scan.
+    console.error(`secretguard: skipping unreadable directory ${directory}: ${(error as Error).message}`)
+    return
+  }
 
   for (const entry of entries) {
     const fullPath = join(directory, entry.name)

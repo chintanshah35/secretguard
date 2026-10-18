@@ -63,6 +63,20 @@ describe('gitignore', () => {
     ])
   })
 
+  it('scans an explicitly named gitignored directory (and still skips it under a parent scan)', async () => {
+    const directory = await repoWithIgnoredSecret()
+
+    // Scanning the repo root skips logs/ (gitignored)
+    const parent = await scan(directory)
+    expect(parent.findings).toEqual([])
+
+    // Naming the ignored directory explicitly scans it anyway
+    const explicit = await scan(join(directory, 'logs'))
+    expect(explicit.findings.map((finding) => finding.file)).toEqual([
+      expect.stringContaining('debug.log'),
+    ])
+  })
+
   it('walks everything outside a git repo', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'secretguard-plain-'))
     await writeFile(join(directory, '.env.local'), `GITHUB_TOKEN=${secret}\n`)

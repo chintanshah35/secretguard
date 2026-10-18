@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-import { existsSync } from 'fs'
+import { existsSync, statSync } from 'fs'
 import { writeFile } from 'fs/promises'
 import { parseArgs } from './args.js'
 import { scan } from '../scanner/index.js'
+import { isGitIgnored } from '../scanner/git-files.js'
 import { scanHistory } from '../scanner/history.js'
 import { scanStaged } from '../scanner/staged.js'
 import { loadIgnoreFile } from '../scanner/ignorefile.js'
@@ -23,6 +24,16 @@ const VERIFY_WARNING = `WARNING: --verify sends detected credential values to pr
 (OpenAI, Anthropic, GitHub, Stripe, AWS STS) to check whether they are active.
 Source files are not uploaded. Do not use --verify if this violates your
 organization's security policy.`
+
+// Exit codes: 0 = clean, 1 = findings at/above --fail-on, 2 = usage error, 3 = internal error.
+// Keeping 3 distinct lets CI tell "secretguard broke" apart from "secretguard found secrets".
+const onFatal = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error)
+  console.error(`secretguard: internal error: ${message}`)
+  process.exit(3)
+}
+process.on('unhandledRejection', onFatal)
+process.on('uncaughtException', onFatal)
 
 let args: ReturnType<typeof parseArgs>
 try {
@@ -77,6 +88,12 @@ Examples:
   secretguard . --sarif results.sarif
   secretguard . --baseline .secretguard-baseline.json
   secretguard . --output report.html
+
+Exit codes:
+  0  no findings at or above --fail-on
+  1  findings at or above --fail-on
+  2  usage error (bad flag, missing path)
+  3  internal error (the scan did not complete)
   `)
   process.exit(0)
 }
@@ -131,6 +148,11 @@ if (args.history) {
 
   process.exitCode = failsBuild(findings) ? 1 : 0
 } else {
+  // An explicitly named directory that git ignores is scanned anyway — tell the user why.
+  if (args.gitignore !== false && statSync(args.target).isDirectory() && (await isGitIgnored(args.target))) {
+    console.error(`secretguard: ${args.target} is gitignored; scanning it because you named it explicitly.`)
+  }
+
   const fileIgnore = await loadIgnoreFile(args.target)
   const rawResult = await scan(args.target, {
     ignore: [...args.ignore, ...fileIgnore],
