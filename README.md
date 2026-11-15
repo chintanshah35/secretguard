@@ -1,12 +1,13 @@
 # secretguard
 
-Scan your source code for secrets, credentials, and PII before they reach production.
+Scan your source code for secrets, credentials, and PII before they reach production. Also audit the machine you write that code on for exposed, long-lived credentials.
 
 ```bash
 npx secretguard .
+npx secretguard audit
 ```
 
-Exits with code `1` if any CRITICAL findings are detected (change it with `--fail-on`) — drop it into your CI pipeline and it just works.
+Exits with code `1` if any CRITICAL findings are detected (change it with `--fail-on`). Drop it into your CI pipeline and it just works.
 
 ## What it detects
 
@@ -151,6 +152,11 @@ secretguard . --verify
 # Install a git pre-commit hook
 secretguard install-hook
 
+# Audit this machine for exposed, long-lived credentials (offline)
+secretguard audit
+secretguard audit --fail-on high
+secretguard audit --json
+
 # Save SARIF report (for GitHub Code Scanning upload)
 secretguard . --sarif results.sarif
 
@@ -161,11 +167,34 @@ secretguard . --baseline .secretguard-baseline.json
 secretguard . --baseline .secretguard-baseline.json --update-baseline
 ```
 
+## Machine audit
+
+`secretguard audit` checks your laptop (and the current project) for the credential-hygiene failures behind supply-chain incidents like Black October. It is fully offline: no path, token, or filename leaves the machine.
+
+```bash
+npx secretguard audit
+npx secretguard audit --fail-on high   # exit 1 on HIGH or above (default is critical)
+```
+
+Checks today:
+
+| Check | Severity |
+|---|---|
+| npm auth token in `~/.npmrc` | HIGH |
+| Static AWS keys in `~/.aws/credentials` | HIGH if world-readable, else MEDIUM |
+| SSH private key readable by others | HIGH |
+| `.env` file not covered by `.gitignore` | HIGH |
+| GitHub CLI OAuth token on disk | MEDIUM |
+| Secret assigned in shell history | MEDIUM |
+
+Every finding includes a concrete fix. This is not a vulnerability scanner or an EDR. It is a short hygiene check you can run locally or fail CI on with `--fail-on high`.
+
 ## Network behavior
 
 | Mode | Network | Data sent |
 |---|---|---|
 | Default scan | None | Nothing |
+| `audit` | None | Nothing |
 | `--staged` / `--history` | None | Nothing |
 | `--verify` | Provider APIs only | Candidate credential values for supported providers |
 
@@ -216,7 +245,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Scan for secrets
-        uses: chintanshah35/secretguard@v1.4.0
+        uses: chintanshah35/secretguard@v1.5.0
         with:
           path: .
           args: --sarif results.sarif
@@ -230,7 +259,7 @@ jobs:
 Optional live verification (sends candidate secrets to provider APIs):
 
 ```yaml
-- uses: chintanshah35/secretguard@v1.4.0
+- uses: chintanshah35/secretguard@v1.5.0
   with:
     path: .
     verify: 'true'

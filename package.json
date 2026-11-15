@@ -1,7 +1,7 @@
 {
   "name": "secretguard",
-  "version": "1.4.0",
-  "description": "Scan source code for secrets, credentials, and PII",
+  "version": "1.5.0",
+  "description": "Scan source for secrets and audit local credentials",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
