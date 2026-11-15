@@ -9,6 +9,8 @@ import { scanHistory } from '../scanner/history.js'
 import { scanStaged } from '../scanner/staged.js'
 import { loadIgnoreFile } from '../scanner/ignorefile.js'
 import { installHook } from '../install-hook.js'
+import { runAudit } from '../audit/index.js'
+import { printAuditReport, printAuditJson } from '../reporter/audit-terminal.js'
 import { loadBaseline, filterBaseline, writeBaseline } from '../baseline.js'
 import { withRemediation } from '../enrich.js'
 import { verifyFindings } from '../verify.js'
@@ -61,6 +63,7 @@ secretguard — scan source code for secrets, credentials, and PII
 Usage:
   secretguard [path] [options]
   secretguard install-hook [path]
+  secretguard audit [path] [--json] [--fail-on <severity>]
 
 Options:
   --ignore, -i <path>       Ignore a path (repeatable)
@@ -85,6 +88,7 @@ Examples:
   secretguard . --staged
   secretguard . --verify
   secretguard install-hook
+  secretguard audit                     Audit this machine for exposed, long-lived credentials
   secretguard . --sarif results.sarif
   secretguard . --baseline .secretguard-baseline.json
   secretguard . --output report.html
@@ -107,6 +111,16 @@ if (args.installHook) {
     process.exit(1)
   }
   process.exit(0)
+}
+
+if (args.audit) {
+  const result = await runAudit({ target: args.target })
+  if (args.json) {
+    printAuditJson(result)
+  } else {
+    printAuditReport(result)
+  }
+  process.exit(failsBuild(result.findings) ? 1 : 0)
 }
 
 async function finalizeFindings(findings: Finding[]) {
