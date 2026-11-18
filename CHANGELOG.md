@@ -5,6 +5,9 @@
 ### Added
 - `secretguard audit` — offline machine/project credential-hygiene check. Reports npm tokens in `~/.npmrc`, static AWS keys, world-readable SSH private keys, GitHub CLI tokens on disk, `.env` files not covered by `.gitignore`, and secrets assigned in shell history. Supports `--json` and `--fail-on`. No network, no values leave the machine.
 
+### Changed
+- Dev tooling: vitest 4.1.12, tsup 8.5.1, rollup override 4.68.3 (build/test only, not shipped in the published package)
+
 ## 1.4.0
 
 Far fewer false positives on real code. Benchmarked across a range of large open-source projects, 1.4.0 reports dramatically fewer findings than 1.3.0 and no critical false positives, and produces valid JSON even on large result sets. The findings it keeps are benign lower-severity matches that are correctly flagged, not suppressed.
